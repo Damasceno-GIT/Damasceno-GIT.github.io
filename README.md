@@ -43,7 +43,7 @@ O tema claro (`data-theme="light"`) mantinha a seção do anúncio com **faixa e
 - **Responsivo**: tabela de formatos com rolagem horizontal (`display:block; overflow-x:auto`); botões em largura total e paddings reduzidos em `≤760px`; tipografia ajustada em `≤420px`.
 - **Sem regressão no tema escuro** (verificado por captura: idêntico ao anterior).
 
-## Carrossel no celular, menu hambúrguer e espaçamentos (v22–v26)
+## Carrossel no celular, menu hambúrguer e espaçamentos (v22–v27)
 Ajustes de layout aplicados **exclusivamente em CSS** (nenhuma marcação foi alterada), para que o comportamento não dependa do HTML de cada página. Cada ajuste vive em um bloco comentado e idempotente dentro dos bundles de `assets/css/`, aplicado por um script em `.tools/`.
 
 > **Por que em CSS e nos bundles:** as páginas carregam o bundle no `<head>` e depois dezenas de blocos `<style>` inline com `!important`. As regras abaixo usam seletores suficientemente específicos (ou ID) para vencer a cascata sem tocar no HTML.
@@ -72,24 +72,39 @@ O banner ficava alto demais no celular: a regra `@media(max-width:760px){html bo
 - Script: `.tools/v24_drawer.py` — 7 bundles (todas as páginas com drawer).
 - Bloco: `/* v24-drawer:start */ … :end */`
 
-### v26 — vão de exatamente 7px entre as migalhas e o título (todas as páginas)
-Pedido: **7px** entre a linha das migalhas de pão e o nome da página, em todas as páginas.
+### v27 — migalhas × título: respiro no desktop e empilhado centralizado no celular (todas as páginas)
+Pedido: **desktop** com espaçamento entre as migalhas e o título (em todas as páginas) e **celular** com as migalhas, a data e o título **um debaixo do outro, centralizados, com espaçamento**. Substitui o bloco `v26`.
 
-O vão visível **não é só a margem CSS**: o `<h1>` acrescenta acima das letras a folga de entrelinha `(line-height − ascent − descent)/2 + (ascent − cap-height)`, e essa folga **muda com o `font-size` do título**. Como o site tem **duas** estruturas de cabeçalho e o `font-size` cai em `@media(max-width:760px)`, um único valor de margem nunca daria 7px em todos os casos:
+**O problema que o v26 não resolvia no desktop.** No `.phead` as migalhas (`.crumbs`, pílula) e o selo da data (`.tagp`) ficam na **mesma linha**, lado a lado. A pílula tem 34px de altura e o selo 27,59px — a pílula termina ~2,4px **abaixo** do selo. Como o vão era medido a partir do elemento mais baixo, o número fechava "7px" **a partir do selo**, mas a pílula ficava a apenas ~4,6px do título: parecia colado. O v27 passa a ancorar o vão na **base da pílula / do `nav.crumb`**, que é o que o olho enxerga como fim das migalhas.
 
-| estrutura | largura | `font-size` do `h1` | folga interna | margem para 7px |
-|---|---|---|---|---|
-| `.phead` (11 páginas) | ≥761px | 33.6px | 7.31px | **−0.31px** |
-| `.phead` (11 páginas) | ≤760px | 21.3px | 3.29px | **+3.70px** |
-| `.pghero` (7 páginas `programa-*`) | ≥761px | 46.5px | 7.75px | **−0.75px** |
-| `.pghero` (7 páginas `programa-*`) | ≤760px | 25.8px | 4.40px | **+2.60px** |
+**Desktop (≥761px):** vão de **16px** — o mesmo ritmo do `margin-top:16px` do parágrafo abaixo do título.
 
-- Margens base zeradas (`.crumbs{16px}`, `.tagp{14px}`, `.crumb{18px}`, `.pghero h1{margin-top:16px}`) e o vão controlado pelo `margin-top` do `h1`, em dois intervalos de mídia.
-- Cobre **18 páginas** (11 com `.phead` + 7 com `.pghero`); a `404.html` não tem migalhas.
-- Script: `.tools/v26_vao_migalhas.py` — 7 bundles; **substitui** o bloco anterior `v25`.
-- Bloco: `/* v26-vao-migalhas:start */ … :end */`
+| estrutura | `font-size` do `h1` | folga de entrelinha | `margin-top` aplicado |
+|---|---|---|---|
+| `.phead` (11 páginas) | 33.6px | 7.31px | **8.7px** |
+| `.pghero` (7 páginas `programa-*`) | 46.5px | 7.75px | **8.25px** |
 
-**Verificação (navegador real, `getBoundingClientRect` + métricas de fonte):** vão medido em **7.01px** (`.phead`, ≥761px), **6.98px** (`.phead`, ≤760px), **7.00px** (`.pghero`, ≥761px) e **6.99px** (`.pghero`, ≤760px) — isto é, **18/18 páginas** em 7px, em 7 larguras de 390px a 1280px.
+**Mobile (≤760px):** migalhas, data e título empilhados e centralizados.
+
+| | valor |
+|---|---|
+| vão migalhas → data | **10px** |
+| vão data → título | **~12px** (8.7px + folga de 3,29px no `.phead`; 7,6px + 4,40px no `.pghero`) |
+| título | `text-align:center` |
+| centralização | deslocamento em relação ao centro = **0px** |
+
+**A armadilha da centralização (descoberta via CSSOM).** A primeira tentativa foi dar `display:flex` na própria pílula, com seletor `html body .phead .wrap .crumbs.crumbs` (0,4,2 — **maior** que a regra inline `html body .crumbs.crumbs` (0,2,2)) e `!important`. Mesmo assim o `display` computado continuava `inline-flex` e a pílula ficava **91px à esquerda** do centro.
+
+A saída foi **não disputar a propriedade `display`**: o **contêiner** vira `display:flex; flex-direction:column; align-items:center`. Assim a pílula passa a ser um *flex item* e é centralizada (e encolhida ao próprio conteúdo) **pelo pai**, qualquer que seja o `display` dela. Verificado: o deslocamento cai de −91px para **0**.
+
+- Os filhos de largura total (`>h1`, `>p`, `>.insthero`, `.pgmeta`, `.pghero__act`) recebem `width:100%` — sem isso, como flex items, a largura passaria a ser a do conteúdo e o parágrafo viraria uma linha só. O `.insthero` (presente **só** na `institucional.html`, e que é `display:grid`) também precisou dessa correção para não encolher.
+- Cobre **18 páginas** (11 com `.phead` + 7 com `.pghero`); a `404.html` e a `index.html` não têm migalhas.
+- Script: `.tools/v27_migalhas_responsivo.py` — 7 bundles; **substitui** os blocos `v25` e `v26`.
+- Bloco: `/* v27-migalhas:start */ … :end */`
+
+**Verificação (navegador real, `getBoundingClientRect` + métricas de fonte), em 360–1280px:**
+- Desktop: vão pílula→título = **16px** exato; `empilhado:false`; título alinhado à esquerda (`text-align:start`); contêiner segue `display:block` (layout intocado).
+- Mobile: `flex-direction:column`, `align-items:center`, `empilhado:true`, centralização **0**, vãos **10px** e **11,98px**, título e parágrafo em `center`.
 
 ### Como reaplicar os ajustes
 Os scripts são **idempotentes** (removem o próprio bloco antes de reinserir), então podem ser reexecutados com segurança. Eles ficam na pasta `.tools/` do **repositório de trabalho** (`/home/user/webapp/.tools/`), e não dentro deste pacote publicado:
@@ -99,11 +114,11 @@ cd /home/user/webapp
 python3 .tools/v22_espaco_flag.py
 python3 .tools/v23_mobile_carrossel.py
 python3 .tools/v24_drawer.py
-python3 .tools/v26_vao_migalhas.py   # v25 é obsoleto: apenas delega para o v26
+python3 .tools/v27_migalhas_responsivo.py   # v25 e v26 são obsoletos: apenas delegam para o v27
 ```
 Após reexecutar, valide a integridade dos bundles (chaves balanceadas e 0 erros de parse — via `tinycss2`).
 
-> **Atenção:** `v25_migalhas.py` está **obsoleto**. Ele foi mantido só como atalho para o v26, porque reexecutar a versão antiga reintroduziria `margin-bottom:-.5px` e derrubaria o vão para 6.81px. Use sempre o `v26_vao_migalhas.py`.
+> **Atenção:** `v25_migalhas.py` e `v26_vao_migalhas.py` estão **obsoletos**. Os dois foram convertidos em atalhos que delegam para o `v27`, para que reexecutar um script antigo não desfaça a correção atual. Use sempre o `v27_migalhas_responsivo.py`.
 
 ## Guia de uso
 1. Abra https://damasceno-git.github.io/

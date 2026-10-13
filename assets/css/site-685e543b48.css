@@ -1850,20 +1850,74 @@ html[data-theme="light"] .navwrap::before,html[data-theme="light"] .navwrap::aft
 @keyframes v24-item{from{opacity:0}to{opacity:1}}
 @keyframes v24-live{0%{box-shadow:0 0 0 0 rgba(255,59,74,.65)}70%{box-shadow:0 0 0 10px rgba(255,59,74,0)}100%{box-shadow:0 0 0 0 rgba(255,59,74,0)}}
 /* v24-drawer:end */
-/* v26-vao-migalhas:start */
-/* vao de exatamente 7px entre as migalhas (migalhas + data/selo) e o titulo.
-   Zeramos as margens base e controlamos o vao pelo margin-top do h1, porque o
-   h1 ja adiciona a folga de entrelinha acima das letras - e essa folga muda com
-   o font-size do titulo (que cai em @media(max-width:760px)). Valores medidos
-   no browser: .phead 33.6px->folga 7.31px | 21.3px->3.29px
-                 .pghero 46.5px->folga 7.75px | 25.8px->4.40px */
-.phead .crumbs,.phead .tagp,.pghero .crumb,.pghero .chip{margin-bottom:0!important}
+/* v27-migalhas:start */
+/* ===== desktop (>=761px): respiro entre as migalhas e o titulo =============
+   O vao e medido a partir da base da PILULA (.crumbs / nav.crumb), que e mais
+   alta que o selo da data e por isso define o fim visual da linha. ========= */
 @media(min-width:761px){
-  .phead h1{margin-top:-.31px!important}
-  .pghero h1{margin-top:-.75px!important}
+  html body .phead .wrap .crumbs.crumbs{margin-bottom:0!important}
+  html body .phead .wrap .tagp{margin-bottom:0!important}
+  html body .phead h1{margin-top:8.7px!important}
+
+  html body .pghero .pghero__txt .crumb{margin-bottom:0!important}
+  html body .pghero .pghero__txt .chip{margin-bottom:0!important}
+  html body .pghero .pghero__txt h1{margin-top:8.25px!important}
 }
+
+/* ===== mobile (<=760px): um debaixo do outro, tudo centralizado ===========
+   O CONTAINER vira coluna com align-items:center. E assim que a pilula e
+   centralizada: como flex item ela e posicionada (e encolhida ao proprio
+   conteudo) PELO PAI, sem depender do `display` dela. Verificado: o
+   deslocamento em relacao ao centro cai de -91px para 0. ================= */
 @media(max-width:760px){
-  .phead h1{margin-top:3.7px!important}
-  .pghero h1{margin-top:2.6px!important}
+  html body .phead .wrap,
+  html body .pghero .pghero__txt{
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+  }
+
+  /* os textos mantem a largura total; sem isto, como flex item a largura
+     passaria a ser a do conteudo e o paragrafo viraria uma linha so.
+     .insthero (institucional.html) tambem e filho direto do .wrap do .phead
+     e precisa continuar ocupando a largura toda. */
+  html body .phead .wrap>h1,
+  html body .phead .wrap>p,
+  html body .phead .wrap>.insthero,
+  html body .pghero .pghero__txt>h1,
+  html body .pghero .pghero__txt>.pghero__lead,
+  html body .pghero .pghero__txt>.pgmeta,
+  html body .pghero .pghero__txt>.pghero__act{
+    width:100%!important;
+  }
+
+  /* migalhas e selo: largura do proprio conteudo (nao esticam) */
+  html body .phead .wrap .crumbs,
+  html body .pghero .pghero__txt .crumb,
+  html body .phead .wrap .tagp,
+  html body .pghero .pghero__txt .chip{
+    margin-left:0!important;
+    margin-right:0!important;
+  }
+
+  /* vaos: 10px entre as migalhas e o selo; 12px visiveis ate o titulo */
+  html body .phead .wrap .crumbs,
+  html body .pghero .pghero__txt .crumb{
+    margin-bottom:10px!important;
+  }
+  html body .phead .wrap .tagp,
+  html body .pghero .pghero__txt .chip{
+    margin-bottom:0!important;
+  }
+  html body .phead h1{margin-top:8.7px!important;text-align:center!important}
+  html body .pghero .pghero__txt h1{margin-top:7.6px!important;text-align:center!important}
+
+  /* o resto do cabecalho acompanha o centro */
+  html body .phead .wrap>p{text-align:center!important}
+  html body .pghero .pghero__txt .pghero__lead{text-align:center!important}
+  html body .pghero .pghero__txt .pgmeta{
+    justify-content:center!important;text-align:center!important;
+  }
+  html body .pghero .pghero__txt .pghero__act{justify-content:center!important}
 }
-/* v26-vao-migalhas:end */
+/* v27-migalhas:end */
