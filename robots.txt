@@ -1,0 +1,3 @@
+# PREVIA - nao indexar. Na publicacao, remova a linha Disallow.
+User-agent: *
+Disallow: /

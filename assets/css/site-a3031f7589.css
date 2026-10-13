@@ -1,0 +1,7 @@
+
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:#06070A;color:#fff;
+font-family:Montserrat,Archivo,Inter,Arial,sans-serif;text-align:center;padding:24px}
+h1{font-size:clamp(28px,5vw,44px);margin:0 0 10px;font-weight:800}
+p{color:#B9C3D0;max-width:540px;margin:0 auto 22px;line-height:1.6}
+a{display:inline-block;margin:6px;padding:12px 22px;border-radius:999px;text-decoration:none;font-weight:700}
+.a1{background:#0A5AA8;color:#fff}.a2{background:#FEBE10;color:#0A0B0F}b{color:#FEBE10}
