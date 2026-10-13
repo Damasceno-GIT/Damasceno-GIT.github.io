@@ -116,6 +116,40 @@ A saída foi **não disputar a propriedade `display`**: o **contêiner** vira `d
 
 Os 8 bundles foram checados no ar (9 páginas amostradas, todas com o bloco `v27`; a `404.html` fica fora porque não tem migalhas). Site ao vivo em `4d013de`: `site-69d0d50dd9.css` = 147518 B com `v27=1`.
 
+### v28 — Programas no celular: 2 cards por linha (em vez de 4)
+Pedido: na página `programas.html`, mostrar **2 cards por linha no celular**.
+
+**A causa raiz.** O CSS já tinha a regra correta para o celular:
+```css
+.progs{display:grid;grid-template-columns:repeat(7,1fr);gap:16px}
+@media (max-width:1180px){.progs{grid-template-columns:repeat(4,1fr)}}
+@media (max-width:760px){.progs{grid-template-columns:repeat(2,1fr)}}   /* existia, mas nunca vencia */
+```
+Mas o HTML congela a grade num **estilo inline**:
+```html
+<div class="progs" style="grid-template-columns:repeat(4,1fr);margin-bottom:34px">
+```
+Estilo inline é *author normal* e **vence qualquer seletor de folha de estilo — inclusive as media queries**. Resultado: a grade ficava com 4 colunas em todas as larguras e a regra de 2 colunas não tinha efeito.
+
+**A correção (só CSS, sem tocar no HTML).** Na cascata, *author `!important`* tem prioridade **maior** que *author normal* (onde vive o `style=""`). Basta declarar o valor com `!important` no bundle:
+```css
+@media(max-width:760px){
+  html body .progs.progs{grid-template-columns:repeat(2,1fr)!important}
+}
+```
+Acima de 760px nada é declarado, então o desktop segue com as 4 colunas que o inline define — **sem regressão**.
+
+**Verificação (capturas do site, escala 2, medição das colunas por saturação de cor):**
+
+| viewport | colunas | largura do card | gap |
+|---|---|---|---|
+| Desktop 1264px | **4** (inalterado) | 296px | 18px |
+| Mobile 375px | **2** ✅ | 165px | 18px |
+
+- Cobertura: os 7 bundles que contêm `.progs{display:grid` (o `404.html` não tem a regra e é pulado).
+- Script: `.tools/v28_programas_2col.py`
+- Bloco: `/* v28-programas-2col:start */ … :end */`
+
 ### Como reaplicar os ajustes
 Os scripts são **idempotentes** (removem o próprio bloco antes de reinserir), então podem ser reexecutados com segurança. Eles ficam na pasta `.tools/` do **repositório de trabalho** (`/home/user/webapp/.tools/`), e não dentro deste pacote publicado:
 
@@ -125,6 +159,7 @@ python3 .tools/v22_espaco_flag.py
 python3 .tools/v23_mobile_carrossel.py
 python3 .tools/v24_drawer.py
 python3 .tools/v27_migalhas_responsivo.py   # v25 e v26 são obsoletos: apenas delegam para o v27
+python3 .tools/v28_programas_2col.py
 ```
 Após reexecutar, valide a integridade dos bundles (chaves balanceadas e 0 erros de parse — via `tinycss2`).
 

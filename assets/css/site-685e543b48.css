@@ -1921,3 +1921,13 @@ html[data-theme="light"] .navwrap::before,html[data-theme="light"] .navwrap::aft
   html body .pghero .pghero__txt .pghero__act{justify-content:center!important}
 }
 /* v27-migalhas:end */
+/* v28-programas-2col:start */
+/* ===== Programas no celular: 2 cards por linha ============================
+   O .progs recebe style="grid-template-columns:repeat(4,1fr)" INLINE no HTML,
+   e o inline vence as media queries. Uma declaracao !important na folha de
+   estilo tem prioridade maior que o inline normal e devolve as 2 colunas.
+   Acima de 760px nada muda (o inline continua valendo). ================== */
+@media(max-width:760px){
+  html body .progs.progs{grid-template-columns:repeat(2,1fr)!important}
+}
+/* v28-programas-2col:end */
