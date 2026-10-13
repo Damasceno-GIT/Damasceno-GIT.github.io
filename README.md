@@ -150,6 +150,33 @@ Acima de 760px nada é declarado, então o desktop segue com as 4 colunas que o 
 - Script: `.tools/v28_programas_2col.py`
 - Bloco: `/* v28-programas-2col:start */ … :end */`
 
+### v29 — Carrossel da capa no celular: banners institucionais novos, 450px de altura, título e CTA centralizados
+Pedido: **substituir** as artes dos banners institucionais do carrossel **apenas no celular**, **subir a altura do carrossel para 450px** e **centralizar o título e o CTA** dos slides de matéria.
+
+**Onde fica o carrossel.** É o `#v10slider` dentro de `<header class="hero">`, e **somente a `index.html` o usa** (as outras 19 páginas não têm marcador de carrossel). Dentro dele há 3 banners intercalados com 3 matérias:
+
+| slide | classe extra | arte original | arte mobile (nova) | link |
+|---|---|---|---|---|
+| 1º | `.slide--df-full` | `be8c58cfdcdd.jpg` | `banner-mobile-df-alerta.jpg` | `programa-df-alerta.html` |
+| — | `.slide--institutional-full` | `de8ae7524329.jpg` | `banner-mobile-familia.jpg` | — |
+| — | `.slide--institutional-full` | `anuncie-tvbrasilia-arte-2.jpg` | `banner-mobile-anuncie.jpg` | `anuncie.html` |
+
+Os três identificadores (`be8c58cfdcdd`, `de8ae7524329`, `anuncie-tvbrasilia`) aparecem **uma única vez** em todo o site, o que permite usá-los como gancho seguro de CSS. As **duas** `.slide--institutional-full` dividem a mesma classe, então cada uma é achada pela **própria imagem** com `:has(img[src*="…"])` — construção que o bundle já usa em mais de uma dezena de regras.
+
+**A correção (só CSS, sem tocar no HTML).** Um único `@media(max-width:760px)` acrescentado ao fim de `site-7830ebdce1.css`, com três partes:
+
+1. **Altura 450px** — `--hero-total-height:450px` e `#v10slider.slider{height/min-height/max-height:450px}`, e a `.slide__media` de `top:0` a `bottom:0` (zera o `--hero-media-top:102px` que os banners institucionais tinham).
+2. **Arte nova** — no celular o `<img>` antigo sai (`display:none`) e a arte 1:1 entra como `background-image` da `.slide__media`, em `background-size:contain` (para **não cortar nenhuma palavra**) sobre `#06070A`. O `<a.slide__link>` que envolvia a imagem **continua existindo** e passa a cobrir toda a área (`position:absolute;inset:0`), então o banner segue clicável.
+3. **Título e CTA centralizados** — `.slide__body{justify-content:center;text-align:center}`, `.slide__col{width:100%;margin:0 auto}`, `.slide__title{text-align:center}`, `.slide__act{justify-content:center}`. O `.slide__body` é `display:flex` em linha, então `justify-content` cuida do eixo horizontal e o `align-items` (vertical) fica como estava, para o texto não invadir a foto.
+
+Acima de 760px **nada** é declarado: o desktop permanece idêntico.
+
+> **Achado importante de cascata.** A `index.html` carrega **blocos `<style>` embutidos depois do `<link>`** deste bundle. Um deles (`v10dk`) redefine, no celular, `--hero-total-height` como 458px e a altura do `#v10slider` como `clamp(380px,122vw,560px)`. Como um `<style>` inline é a mesma origem e vem *depois*, ele **venceria no empate** de especificidade. Por isso a variável é declarada como `html:root body` (o `:root` soma 1 “classe” e ganha independentemente da ordem), e a altura usa `#v10slider.slider` (1 id, que já supera o `#v10slider` do bloco embutido).
+
+- Cobertura: apenas `site-7830ebdce1.css` (único bundle com `#v10slider` **e** `slide--institutional-full`); os outros 7 são pulados.
+- Script: `.tools/v29_banners_mobile.py`
+- Bloco: `/* v29-banners-mobile:start */ … :end */`
+
 ### Como reaplicar os ajustes
 Os scripts são **idempotentes** (removem o próprio bloco antes de reinserir), então podem ser reexecutados com segurança. Eles ficam na pasta `.tools/` do **repositório de trabalho** (`/home/user/webapp/.tools/`), e não dentro deste pacote publicado:
 
@@ -160,6 +187,7 @@ python3 .tools/v23_mobile_carrossel.py
 python3 .tools/v24_drawer.py
 python3 .tools/v27_migalhas_responsivo.py   # v25 e v26 são obsoletos: apenas delegam para o v27
 python3 .tools/v28_programas_2col.py
+python3 .tools/v29_banners_mobile.py
 ```
 Após reexecutar, valide a integridade dos bundles (chaves balanceadas e 0 erros de parse — via `tinycss2`).
 

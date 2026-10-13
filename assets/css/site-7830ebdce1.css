@@ -2456,3 +2456,74 @@ html[data-theme="light"] .navwrap::before,html[data-theme="light"] .navwrap::aft
   html body .progs.progs{grid-template-columns:repeat(2,1fr)!important}
 }
 /* v28-programas-2col:end */
+/* v29-banners-mobile:start */
+/* ===== Carrossel da capa no celular (v29) =================================
+   (1) banners institucionais com a arte mobile; (2) carrossel de 450px;
+   (3) titulo e CTA das materias centralizados. Tudo dentro do @media, o
+   desktop (>760px) fica exatamente como estava. ========================= */
+@media(max-width:760px){
+
+  /* ---- 1) altura do carrossel: 450px ----------------------------------- */
+  /* ATENCAO: a index.html traz blocos <style> EMBUTIDOS que sao lidos DEPOIS
+     do <link> deste bundle. Um deles ("v10dk") define, no celular,
+     --hero-total-height como 458px e, no #v10slider, a altura como
+     clamp(380px,122vw,560px).
+     Variavel em "html body" tem a mesma especificidade e PERDERIA por ordem
+     de leitura; por isso aqui vai "html:root body" (o :root soma 1 classe),
+     que ganha em especificidade independentemente da ordem. Para a ALTURA do
+     #v10slider basta "#v10slider.slider" (1 id vence), mas mantemos as duas
+     declaracoes coerentes. */
+  html:root body{--hero-total-height:450px!important;--hero-art-height:450px!important}
+  html body .hero .slider{--hero-scale:1!important}
+  html body #v10slider.slider{
+    height:450px!important;min-height:450px!important;max-height:450px!important}
+  html body #v10slider.slider .slide{
+    height:100%!important;min-height:0!important;max-height:none!important}
+  /* a arte/arte-fundo ocupa o slide inteiro (zera o --hero-media-top dos
+     banners institucionais, que aqui e 102px) */
+  html body #v10slider.slider .slide .slide__media,
+  html body #v10slider.slider .slide .slide__media > a.slide__link{
+    top:0!important;bottom:0!important;left:0!important;right:0!important;
+    height:auto!important;max-height:none!important}
+
+  /* ---- 2) banners: substituir a arte pela versao mobile ----------------- */
+  /* A foto antiga (paisagem) sai; entra a arte 1:1 como fundo do
+     .slide__media, em "contain" para nao cortar nenhuma palavra. */
+  html body #v10slider.slider .slide--banner .slide__media img{display:none!important}
+
+  /* o link do banner continua no ar, agora cobrindo toda a area da arte */
+  html body #v10slider.slider .slide--banner .slide__media > a.slide__link{
+    display:block!important;position:absolute!important;inset:0!important;
+    width:100%!important;height:100%!important}
+
+  /* (a) DF Alerta - classe propria (.slide--df-full) */
+  html body #v10slider.slider .slide--df-full .slide__media{
+    background-image:url("../img/banner-mobile-df-alerta.jpg")!important;
+    background-size:contain!important;background-position:center center!important;
+    background-repeat:no-repeat!important;background-color:#06070A!important}
+
+  /* (b) institucional "Toda a Familia" - achado pela propria imagem */
+  html body #v10slider.slider .slide--institutional-full:has(img[src*="de8ae7524329"]) .slide__media{
+    background-image:url("../img/banner-mobile-familia.jpg")!important;
+    background-size:contain!important;background-position:center center!important;
+    background-repeat:no-repeat!important;background-color:#06070A!important}
+
+  /* (c) institucional "Anuncie aqui" - achado pela propria imagem */
+  html body #v10slider.slider .slide--institutional-full:has(img[src*="anuncie-tvbrasilia"]) .slide__media{
+    background-image:url("../img/banner-mobile-anuncie.jpg")!important;
+    background-size:contain!important;background-position:center center!important;
+    background-repeat:no-repeat!important;background-color:#06070A!important}
+
+  /* ---- 3) materias: titulo e CTA centralizados na horizontal ------------ */
+  html body #v10slider.slider .slide--news .slide__body{
+    justify-content:center!important;text-align:center!important}
+  html body #v10slider.slider .slide--news .slide__col{
+    max-width:100%!important;width:100%!important;margin:0 auto!important;
+    text-align:center!important}
+  html body #v10slider.slider .slide--news .slide__title{
+    text-align:center!important;text-wrap:balance!important;
+    margin-left:auto!important;margin-right:auto!important}
+  html body #v10slider.slider .slide--news .slide__act{
+    justify-content:center!important;margin-left:auto!important;margin-right:auto!important}
+}
+/* v29-banners-mobile:end */
