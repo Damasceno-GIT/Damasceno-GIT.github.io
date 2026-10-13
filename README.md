@@ -177,6 +177,64 @@ Acima de 760px **nada** é declarado: o desktop permanece idêntico.
 - Script: `.tools/v29_banners_mobile.py`
 - Bloco: `/* v29-banners-mobile:start */ … :end */`
 
+### v30 — Matérias no celular: texto centralizado, título maior e descrição visível
+Pedido: nos slides de matéria, **centralizar** o bloco, **aumentar um pouco** o título e **mostrar a descrição** com fonte pequena.
+
+**Por que a centralização do v29 não aparecia.** O v29 já declarava `text-align:center` no título, mas o `.slide__body` continuava com `align-items:flex-start` **e** `justify-content:flex-start` (herdados do bloco `v23`), além de um `padding-top` grande que empurrava o texto para baixo do menu. Como o `.slide__body` é `display:flex`, `text-align` sozinho não move o conteúdo — é preciso mexer no **eixo** (`justify-content`/`align-items`). Foi o que o v30 fez.
+
+**O ajuste (só CSS, sem tocar no HTML).** Uma única media query ao fim de `site-7830ebdce1.css`:
+
+| elemento | antes (celular) | depois |
+|---|---|---|
+| `.slide__body` | `align-items:flex-start`, `justify-content:flex-start`, texto no topo | `align-items:center` + `justify-content:center` + `text-align:center` |
+| `.slide__title` | 14.5px, peso 600 | **17px**, peso 700, `line-height:1.22` |
+| `.slide__lead` | `display:none` (escondido) | visível em **12.5px**, no máximo **3 linhas** (`-webkit-line-clamp:3`) |
+| `.slide__act` | alinhado à esquerda | `justify-content:center` |
+
+Especificidade usada: `html:root body #v10slider.slider .slide--news …` (1 id + 4 classes). Isso vence tanto o bloco `v23` (1,2,2) quanto os `<style>` embutidos da `index.html` (0,6,6, **sem** id): como todos declaram `!important`, o desempate cai na **coluna de id** — e só o `#v10slider` tem id.
+
+**A descrição em 3 linhas.** Caso o lead fosse maior que o slide, o texto empurraria o CTA para fora. Para evitar isso, o lead usa `display:-webkit-box` + `-webkit-line-clamp:3` (o padrão de "teaser"): sempre no máximo 3 linhas, com reticências se cortar. Como o `.slide__col` tem `width:100%` e o `.slide__body` respeita o padding, o texto não estoura o carrossel.
+
+- Cobertura: apenas `site-7830ebdce1.css` (único bundle com `#v10slider` **e** `.slide__lead`).
+- Script: `.tools/v30_news_mobile.py`
+- Bloco: `/* v30-news-mobile:start */ … :end */`
+
+### v31 — Carregamento das páginas (imagens 35% mais leves + adiamento)
+Pedido: **melhorar o carregamento das páginas**.
+
+**O diagnóstico (medido, não estimado).** O site é HTML estático sem build; o peso está quase todo em imagem. Na `index.html`, 55 imagens somavam **3,83 MB**, e três delas — as fotos das matérias do carrossel — respondiam por **1,58 MB** sozinhas:
+
+| arquivo | tamanho | formato | cores | veredito |
+|---|---|---|---|---|
+| `e802b4806bf6` | 568 KB | PNG | 165.370 | **fotografia salva como PNG** |
+| `f4f421069d08` | 524 KB | PNG | 123.971 | **fotografia salva como PNG** |
+| `38373c7d6b35` | 494 KB | PNG | 129.080 | **fotografia salva como PNG** |
+
+São **fotos** (centenas de milhares de cores, sem transparência) num formato feito para gráficos. Medição com **SSIM**:
+
+| solução | tamanho | % do original | SSIM |
+|---|---|---|---|
+| JPEG q85 | 71/70/60 KB | **12–13%** | 0,95–0,97 |
+| PNG8 256 cores | 159/159/122 KB | 25–30% | 0,92–0,95 |
+
+O JPEG é **~2,3× menor e com mais qualidade** — vence nos dois critérios. Os outros 58 JPEGs do site ganhariam 1–2% ao recomprimir, então **não foram tocados** (evita artefato de dupla compressão); os PNGs restantes são pequenos (16–32 KB), e o único com transparência real (`d68d23d3c228.png`, o símbolo decorativo) continua PNG.
+
+**O ajuste.**
+1. As 3 fotos-PNG viraram **JPEG q85 progressivo** (1,62 MB → 197 KB) com um **portão de qualidade**: o script aborta se o SSIM ficar abaixo de 0,93.
+2. As 3 referências `src` foram atualizadas na `index.html`; os `.png` órfãos foram removidos (o histórico do git preserva os originais).
+3. **65 `<img>` abaixo do cabeçalho** (em 20 páginas) ganharam `loading="lazy"`; as imagens **dentro do `<header>`** (o carrossel, que aparece na primeira dobra) continuam **imediatas**, para não prejudicar o LCP.
+
+**Resultado medido:**
+
+| | antes | depois |
+|---|---|---|
+| Imagens da capa (`index.html`) | 3,83 MB | **2,47 MB** (−35%) |
+| Soma das imagens de todas as páginas | 5,50 MB | **4,14 MB** (−1,36 MB) |
+| `<img>` adiados | 18 | **48** |
+
+- Script: `.tools/v31_carregamento.py` (idempotente)
+- Não altera CSS; no HTML só escreve `src`/`loading`/`decoding`.
+
 ### Como reaplicar os ajustes
 Os scripts são **idempotentes** (removem o próprio bloco antes de reinserir), então podem ser reexecutados com segurança. Eles ficam na pasta `.tools/` do **repositório de trabalho** (`/home/user/webapp/.tools/`), e não dentro deste pacote publicado:
 
@@ -188,6 +246,8 @@ python3 .tools/v24_drawer.py
 python3 .tools/v27_migalhas_responsivo.py   # v25 e v26 são obsoletos: apenas delegam para o v27
 python3 .tools/v28_programas_2col.py
 python3 .tools/v29_banners_mobile.py
+python3 .tools/v30_news_mobile.py
+python3 .tools/v31_carregamento.py
 ```
 Após reexecutar, valide a integridade dos bundles (chaves balanceadas e 0 erros de parse — via `tinycss2`).
 

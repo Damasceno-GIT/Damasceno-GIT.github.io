@@ -2527,3 +2527,33 @@ html[data-theme="light"] .navwrap::before,html[data-theme="light"] .navwrap::aft
     justify-content:center!important;margin-left:auto!important;margin-right:auto!important}
 }
 /* v29-banners-mobile:end */
+/* v30-news-mobile:start */
+/* ===== Materias do carrossel no celular (v30) =============================
+   (1) bloco de texto no centro do slide; (2) titulo um pouco maior;
+   (3) descricao visivel com fonte pequena (ate 3 linhas).
+   Tudo dentro do @media: o desktop (>760px) nao muda. ================== */
+@media(max-width:760px){
+  /* ---- 1) centro do slide: eixo vertical (align-items) e horizontal ------ */
+  html:root body #v10slider.slider .slide--news .slide__body{
+    align-items:center!important;justify-content:center!important;
+    text-align:center!important;
+    padding:60px 56px 56px!important}
+  html:root body #v10slider.slider .slide--news .slide__col{
+    width:100%!important;max-width:100%!important;margin:0 auto!important;
+    text-align:center!important}
+  /* ---- 2) titulo um pouco maior ----------------------------------------- */
+  html:root body #v10slider.slider .slide--news .slide__title{
+    font-size:17px!important;line-height:1.22!important;font-weight:700!important;
+    text-align:center!important;max-width:none!important;margin:0 auto!important;
+    text-wrap:balance!important}
+  /* ---- 3) descricao visivel, fonte pequena, no maximo 3 linhas ---------- */
+  html:root body #v10slider.slider .slide--news .slide__lead{
+    display:-webkit-box!important;-webkit-box-orient:vertical!important;
+    -webkit-line-clamp:3!important;overflow:hidden!important;
+    font-size:12.5px!important;line-height:1.5!important;
+    text-align:center!important;max-width:none!important;
+    margin:9px auto 0!important}
+  html:root body #v10slider.slider .slide--news .slide__act{
+    justify-content:center!important;margin:13px auto 0!important}
+}
+/* v30-news-mobile:end */
