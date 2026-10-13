@@ -92,14 +92,18 @@ O vão visível **não é só a margem CSS**: o `<h1>` acrescenta acima das letr
 **Verificação (navegador real, `getBoundingClientRect` + métricas de fonte):** vão medido em **7.01px** (`.phead`, ≥761px), **6.98px** (`.phead`, ≤760px), **7.00px** (`.pghero`, ≥761px) e **6.99px** (`.pghero`, ≤760px) — isto é, **18/18 páginas** em 7px, em 7 larguras de 390px a 1280px.
 
 ### Como reaplicar os ajustes
-Os scripts de `.tools/` são **idempotentes** (removem o próprio bloco antes de reinserir), então podem ser reexecutados com segurança:
+Os scripts são **idempotentes** (removem o próprio bloco antes de reinserir), então podem ser reexecutados com segurança. Eles ficam na pasta `.tools/` do **repositório de trabalho** (`/home/user/webapp/.tools/`), e não dentro deste pacote publicado:
+
 ```bash
+cd /home/user/webapp
 python3 .tools/v22_espaco_flag.py
 python3 .tools/v23_mobile_carrossel.py
 python3 .tools/v24_drawer.py
-python3 .tools/v26_vao_migalhas.py
+python3 .tools/v26_vao_migalhas.py   # v25 é obsoleto: apenas delega para o v26
 ```
 Após reexecutar, valide a integridade dos bundles (chaves balanceadas e 0 erros de parse — via `tinycss2`).
+
+> **Atenção:** `v25_migalhas.py` está **obsoleto**. Ele foi mantido só como atalho para o v26, porque reexecutar a versão antiga reintroduziria `margin-bottom:-.5px` e derrubaria o vão para 6.81px. Use sempre o `v26_vao_migalhas.py`.
 
 ## Guia de uso
 1. Abra https://damasceno-git.github.io/
