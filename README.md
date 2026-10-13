@@ -32,6 +32,17 @@
   1. o script dos Shorts rodava **antes** do `#shortModal` existir no DOM (o modal vinha depois), então os cliques nunca eram ligados — agora a inicialização espera o DOM (`DOMContentLoaded`/`readyState`);
   2. chamada `qa(seletor, raiz)` recebia uma **string** como raiz, causando `querySelectorAll is not a function` e abortando a inicialização.
 
+## Página "Anuncie aqui" — correção do tema claro (v21)
+O tema claro (`data-theme="light"`) mantinha a seção do anúncio com **faixa escura** e textos claros sobre fundo claro. Correções aplicadas em `anuncie.html`, isoladas por escopo (a folha compartilhada `assets/css/site-598fa12702.css` **não** foi alterada, pois é usada por 19 páginas):
+
+- **Faixa escura removida**: as regras `html[data-theme="light"] body .section:has(.anuncie--adx)` e `html[data-theme="light"] body .anuncie--adx` forçavam `linear-gradient(rgb(11,13,19), rgb(10,11,15))`. Agora a seção é clara (`#F7FAFE → #FFFFFF → #F2F7FC`) com texto escuro.
+- **Conflito de especificidade resolvido**: 12 regras usavam `html[data-theme="light"] body:not(#v10bl) .anuncie--adx …`, que carrega especificidade de **ID** e venceria qualquer bloco de mesma ordem. O bloco corretivo usa `.anuncie--adx#adxClaro` e é o **último `<style>`** do documento, vencendo a cascata.
+- **Contraste corrigido**: `h2` → `#0C1A2B`; destaque "TV Brasília" → `#0868B5`; parágrafos → `#33415A`; cartões 2×2 brancos com texto escuro; botão "Ver plataformas" agora é legível (antes ficava branco sobre branco).
+- **Cartões inferiores**: "Formatos comerciais" e "Como funciona" herdavam `color:#fff` forçado pela seção branca — reaplicados como texto escuro sobre branco.
+- **Cores cravadas no HTML**: as 4 ocorrências de `style="color:#A7B2C2;…"` passaram a usar `var(--t2)`, acompanhando o tema.
+- **Responsivo**: tabela de formatos com rolagem horizontal (`display:block; overflow-x:auto`); botões em largura total e paddings reduzidos em `≤760px`; tipografia ajustada em `≤420px`.
+- **Sem regressão no tema escuro** (verificado por captura: idêntico ao anterior).
+
 ## Guia de uso
 1. Abra https://damasceno-git.github.io/
 2. No carrossel da capa, use as setas (ou `←`/`→` com o carrossel focado) para navegar entre os destaques.
@@ -48,7 +59,7 @@
 | `programacao.html` | Grade do dia |
 | `ao-vivo.html` | Transmissão ao vivo |
 | `portais.html` | Plataformas e redes |
-| `anuncie.html` | Comercial / anuncie aqui |
+| `anuncie.html` | Comercial / anuncie aqui (v21: tema claro sem faixa escura, contraste e responsivo) |
 | `institucional.html`, `acessibilidade.html` | Institucional e acessibilidade |
 | `componentes.html`, `fundamentos.html` | Guia de estilo do projeto |
 | `404.html` | Página de erro |
