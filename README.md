@@ -106,6 +106,16 @@ A saída foi **não disputar a propriedade `display`**: o **contêiner** vira `d
 - Desktop: vão pílula→título = **16px** exato; `empilhado:false`; título alinhado à esquerda (`text-align:start`); contêiner segue `display:block` (layout intocado).
 - Mobile: `flex-direction:column`, `align-items:center`, `empilhado:true`, centralização **0**, vãos **10px** e **11,98px**, título e parágrafo em `center`.
 
+**Verificação no site publicado** (`https://damasceno-git.github.io`, capturas com escala 2 e medição das faixas de conteúdo):
+- Desktop 1264px: pílula 218–244, título 260–292 → vão = **16,0px** exatos.
+- Mobile 390px: da borda inferior da pílula até o topo do selo = **20px**; do selo até o topo das letras do título = **11px** — migalhas, data e título empilhados (bandas de glifos: 201,5–213,5 / 233,5–261,0 / 272,0–292,5).
+  > O `margin` entre as caixas é **10px**; a distância ótima *visível* é maior porque a pílula tem borda e `padding`, e o texto do selo é em caixa-alta (começa abaixo do topo da caixa).
+- Centralização mobile (captura de 780px = 390 CSS px, **sem** barra de rolagem): desvio do centro = **+0,25 / 0,00 / +0,75 / −0,25 / 0,00 / 0,00 px** para migalhas, data, título e as 3 linhas do parágrafo.
+
+> Dica de medição: numa captura com barra de rolagem visível (viewport 375 de 390px) **todos** os elementos aparecem deslocados em +7,5px. Isso é o recorte da barra, não falta de centralização — para medir, use um viewport alto o bastante para o conteúdo caber sem barra.
+
+Os 8 bundles foram checados no ar (9 páginas amostradas, todas com o bloco `v27`; a `404.html` fica fora porque não tem migalhas). Site ao vivo em `4d013de`: `site-69d0d50dd9.css` = 147518 B com `v27=1`.
+
 ### Como reaplicar os ajustes
 Os scripts são **idempotentes** (removem o próprio bloco antes de reinserir), então podem ser reexecutados com segurança. Eles ficam na pasta `.tools/` do **repositório de trabalho** (`/home/user/webapp/.tools/`), e não dentro deste pacote publicado:
 
