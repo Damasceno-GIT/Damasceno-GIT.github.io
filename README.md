@@ -43,6 +43,64 @@ O tema claro (`data-theme="light"`) mantinha a seção do anúncio com **faixa e
 - **Responsivo**: tabela de formatos com rolagem horizontal (`display:block; overflow-x:auto`); botões em largura total e paddings reduzidos em `≤760px`; tipografia ajustada em `≤420px`.
 - **Sem regressão no tema escuro** (verificado por captura: idêntico ao anterior).
 
+## Carrossel no celular, menu hambúrguer e espaçamentos (v22–v26)
+Ajustes de layout aplicados **exclusivamente em CSS** (nenhuma marcação foi alterada), para que o comportamento não dependa do HTML de cada página. Cada ajuste vive em um bloco comentado e idempotente dentro dos bundles de `assets/css/`, aplicado por um script em `.tools/`.
+
+> **Por que em CSS e nos bundles:** as páginas carregam o bundle no `<head>` e depois dezenas de blocos `<style>` inline com `!important`. As regras abaixo usam seletores suficientemente específicos (ou ID) para vencer a cascata sem tocar no HTML.
+
+### v22 — espaço entre o banner e a flag "Anuncie aqui"
+- `.anuncie__img + .anuncie__b{margin-top:10px}` — **10px** entre a arte do banner e a tarja "Anuncie aqui" (mesmo valor em `≤760px`).
+- Script: `.tools/v22_espaco_flag.py` — aplicado nos 7 bundles que contêm as classes.
+- Bloco: `/* v22-espaco-flag:start */ … :end */`
+
+### v23 — carrossel e faixa URGENTE no celular
+O banner ficava alto demais no celular: a regra `@media(max-width:760px){html body #v10slider,html body .hero{height:clamp(380px,122vw,560px)}}` produzia **~476px** a 390px de largura, e `--hero-media-top:108px` criava um vão preto.
+- Altura do slider: `clamp(300px, 80vw, 430px)`; `--hero-media-top:0` e `--hero-art-height:300px`.
+- Títulos de notícia em `14.5px`, `text-wrap:balance`; `lead` oculto no banner para não quebrar texto; CTA e setas reduzidos; `URGENTE` com altura fixa de `34px`.
+- Pontos de navegação ancorados na base (`bottom:14px`), ficando abaixo do título/CTA sem sobrepor.
+- Script: `.tools/v23_mobile_carrossel.py` — **somente** em `site-7830ebdce1.css` (bundle da `index.html`).
+- Bloco: `/* v23-mobile-carrossel:start */ … :end */`
+
+### v24 — menu hambúrguer modernizado
+- Painel em "vidro" (blur + saturação), cantos arredondados, rolagem interna segura (`overscroll-behavior:contain`).
+- **Faixa de marca com a logo pequena** da TV Brasília (96px, 84px em `≤760px`) sobre degradê escuro + filete tricolor.
+- Itens em pílula com barra de destaque; entrada escalonada.
+- **"Ao vivo" em destaque**: gradiente vermelho, ponto pulsante e selo `AO VIVO`.
+- **CTA "Anuncie aqui"** em amarelo, centralizado.
+- **Correção de ordem de camadas**: em `background-image` a **primeira** camada pinta por cima — a arte opaca teve de ser a **última**, senão a logo ficava invisível.
+- **Correção de tema claro**: o bundle pinta `.drawer` de branco no tema claro e lavava o fundo escuro — neutralizado com `html[data-theme="light"] body .drawer{background:transparent}`.
+- Script: `.tools/v24_drawer.py` — 7 bundles (todas as páginas com drawer).
+- Bloco: `/* v24-drawer:start */ … :end */`
+
+### v26 — vão de exatamente 7px entre as migalhas e o título (todas as páginas)
+Pedido: **7px** entre a linha das migalhas de pão e o nome da página, em todas as páginas.
+
+O vão visível **não é só a margem CSS**: o `<h1>` acrescenta acima das letras a folga de entrelinha `(line-height − ascent − descent)/2 + (ascent − cap-height)`, e essa folga **muda com o `font-size` do título**. Como o site tem **duas** estruturas de cabeçalho e o `font-size` cai em `@media(max-width:760px)`, um único valor de margem nunca daria 7px em todos os casos:
+
+| estrutura | largura | `font-size` do `h1` | folga interna | margem para 7px |
+|---|---|---|---|---|
+| `.phead` (11 páginas) | ≥761px | 33.6px | 7.31px | **−0.31px** |
+| `.phead` (11 páginas) | ≤760px | 21.3px | 3.29px | **+3.70px** |
+| `.pghero` (7 páginas `programa-*`) | ≥761px | 46.5px | 7.75px | **−0.75px** |
+| `.pghero` (7 páginas `programa-*`) | ≤760px | 25.8px | 4.40px | **+2.60px** |
+
+- Margens base zeradas (`.crumbs{16px}`, `.tagp{14px}`, `.crumb{18px}`, `.pghero h1{margin-top:16px}`) e o vão controlado pelo `margin-top` do `h1`, em dois intervalos de mídia.
+- Cobre **18 páginas** (11 com `.phead` + 7 com `.pghero`); a `404.html` não tem migalhas.
+- Script: `.tools/v26_vao_migalhas.py` — 7 bundles; **substitui** o bloco anterior `v25`.
+- Bloco: `/* v26-vao-migalhas:start */ … :end */`
+
+**Verificação (navegador real, `getBoundingClientRect` + métricas de fonte):** vão medido em **7.01px** (`.phead`, ≥761px), **6.98px** (`.phead`, ≤760px), **7.00px** (`.pghero`, ≥761px) e **6.99px** (`.pghero`, ≤760px) — isto é, **18/18 páginas** em 7px, em 7 larguras de 390px a 1280px.
+
+### Como reaplicar os ajustes
+Os scripts de `.tools/` são **idempotentes** (removem o próprio bloco antes de reinserir), então podem ser reexecutados com segurança:
+```bash
+python3 .tools/v22_espaco_flag.py
+python3 .tools/v23_mobile_carrossel.py
+python3 .tools/v24_drawer.py
+python3 .tools/v26_vao_migalhas.py
+```
+Após reexecutar, valide a integridade dos bundles (chaves balanceadas e 0 erros de parse — via `tinycss2`).
+
 ## Guia de uso
 1. Abra https://damasceno-git.github.io/
 2. No carrossel da capa, use as setas (ou `←`/`→` com o carrossel focado) para navegar entre os destaques.

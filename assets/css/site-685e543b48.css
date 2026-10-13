@@ -1698,3 +1698,172 @@ html[data-theme="light"] body.inner .socialbar__l,
 html[data-theme="light"] body.inner .socialbar__r,
 html[data-theme="light"] body.inner .socialbar__r a{color:#E6EDF6!important}
 html[data-theme="light"] .navwrap::before,html[data-theme="light"] .navwrap::after,html[data-theme="light"] .site-chrome::before,html[data-theme="light"] .site-chrome::after{content:none!important;display:none!important;background:none!important;box-shadow:none!important}html body a.btn--yellow,html body .btn--yellow,html body .anuncie .btn--yellow,html body .adx__cta{color:#0A0B0F!important;-webkit-text-fill-color:#0A0B0F!important;font-weight:800!important}html body a.btn--yellow:hover,html body a.btn--yellow:focus,html body a.btn--yellow:active,html body .anuncie .btn--yellow:hover,html body .anuncie .btn--yellow:focus,html body .adx__cta:hover{color:#0A0B0F!important;-webkit-text-fill-color:#0A0B0F!important}
+/* v22-espaco-flag:start */
+/* 10px entre o banner (arte) e a flag "Anuncie aqui" */
+.anuncie__img + .anuncie__b{margin-top:10px!important}
+@media (max-width:760px){.anuncie__img + .anuncie__b{margin-top:10px!important}}
+/* v22-espaco-flag:end */
+/* v24-drawer:start */
+@media (max-width:980px){
+  /* ---- scrim: fundo desfocado com brilho de marca ---- */
+  html body .drawer{background:transparent}
+  html body .drawer.is-open{animation:v24-fade .24s ease both}
+  html body .drawer__scrim{
+    background:radial-gradient(120% 100% at 100% 0%,rgba(0,184,240,.12),rgba(0,184,240,0) 62%),rgba(3,5,9,.74);
+    -webkit-backdrop-filter:blur(4px) saturate(1.2);
+    backdrop-filter:blur(4px) saturate(1.2)}
+
+  /* ---- painel: folha de vidro, canto suave, entrada deslizante ---- */
+  html body .drawer__panel{
+    width:min(90vw,372px);
+    padding:0 0 calc(22px + env(safe-area-inset-bottom,0px));
+    background:linear-gradient(180deg,#0B0D13 0%,#070810 100%);
+    border-left:1px solid rgba(255,255,255,.10);
+    border-radius:18px 0 0 18px;
+    box-shadow:-30px 0 90px -42px rgba(0,184,240,.55),-18px 0 60px -30px rgba(0,0,0,.9);
+    overflow-y:auto;overscroll-behavior:contain}
+  html body .drawer.is-open .drawer__panel{animation:v24-panel .44s cubic-bezier(.22,1,.36,1) both}
+
+  /* ---- faixa de marca no topo, com a logo pequena + barra tricolor ----
+     ORDEM DAS CAMADAS: a 1a fica POR CIMA. O gradiente escuro (base) tem de ser
+     a ULTIMA, senao cobre a logo. */
+  html body .drawer__panel::before{
+    content:"";display:block;height:150px;
+    background-image:
+      linear-gradient(90deg,#00B8F0,#0868B5 46%,#F8C018),
+      radial-gradient(120% 130% at 88% 2%,rgba(0,184,240,.24),rgba(0,184,240,0) 62%),
+      url("../img/0235fac7ba9a.png"),
+      linear-gradient(180deg,#0E1A2C 0%,#0A0E17 100%);
+    background-repeat:no-repeat;
+    background-position:bottom left,center,24px 50%,center;
+    background-size:100% 3px,cover,96px auto,cover;
+    border-bottom:1px solid rgba(255,255,255,.06)}
+
+  /* ---- fechar: quadrado de vidro que gira no hover ---- */
+  html body .drawer__panel .drawer__x{
+    position:absolute;top:14px;right:14px;z-index:3;float:none;
+    width:38px;height:38px;padding:0;display:grid;place-items:center;
+    font-size:19px;line-height:1;color:#fff;border-radius:12px;
+    background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.16);
+    -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+    transition:background .18s ease,transform .25s ease}
+  html body .drawer__panel .drawer__x:hover{background:rgba(255,255,255,.2);transform:rotate(90deg)}
+
+  /* ---- itens: pilulas sem linhas, com barra de acento ---- */
+  html body .drawer__panel a,
+  html body .drawer__panel a[aria-current="page"]{
+    display:flex;align-items:center;gap:12px;position:relative;
+    margin:2px 14px;padding:15px 16px;border:0;border-radius:12px;
+    font-size:16.5px;font-weight:600;letter-spacing:.005em;color:#E7ECF3;
+    transition:background .18s ease,color .18s ease,transform .18s ease}
+  html body .drawer__panel a:first-of-type{margin-top:10px}
+  html body .drawer__panel a:hover{
+    background:linear-gradient(90deg,rgba(0,184,240,.16),rgba(0,184,240,0) 85%);
+    color:#fff;transform:translateX(3px)}
+  html body .drawer__panel a:not([href$="ao-vivo.html"]):not([href="anuncie.html"])::before{
+    content:"";position:absolute;left:5px;top:50%;width:3px;height:18px;margin-top:-9px;
+    border-radius:2px;background:linear-gradient(180deg,#00B8F0,#0868B5);
+    opacity:0;transition:opacity .18s ease}
+  html body .drawer__panel a:not([href$="ao-vivo.html"]):not([href="anuncie.html"]):hover::before,
+  html body .drawer__panel a[aria-current="page"]:not([href$="ao-vivo.html"]):not([href="anuncie.html"])::before{opacity:1}
+
+  /* ==== DESTAQUE "AO VIVO": pilula vermelha + ponto pulsante + selo ==== */
+  html body .drawer__panel a[href$="ao-vivo.html"]{
+    color:#fff;
+    background:linear-gradient(90deg,rgba(204,31,44,.24),rgba(204,31,44,.05) 92%);
+    box-shadow:inset 0 0 0 1px rgba(204,31,44,.34),0 10px 30px -22px rgba(204,31,44,.9)}
+  html body .drawer__panel a[href$="ao-vivo.html"]:hover{
+    background:linear-gradient(90deg,rgba(204,31,44,.34),rgba(204,31,44,.10) 92%);
+    box-shadow:inset 0 0 0 1px rgba(255,59,74,.55),0 14px 34px -20px rgba(204,31,44,1)}
+  html body .drawer__panel a[href$="ao-vivo.html"]::before{
+    content:"";position:static;flex:0 0 auto;width:8px;height:8px;margin:0;
+    border-radius:50%;background:#FF3B4A;
+    animation:v24-live 1.7s ease-out infinite}
+  html body .drawer__panel a[href$="ao-vivo.html"]::after{
+    content:"AO VIVO";margin-left:auto;padding:4px 9px;border-radius:999px;
+    font-size:9px;font-weight:800;letter-spacing:.12em;line-height:1;
+    background:#CC1F2C;color:#fff;box-shadow:0 6px 16px -8px rgba(204,31,44,1)}
+
+  /* ==== CTA "Anuncie aqui" no rodape ==== */
+  html body .drawer__panel a[href="anuncie.html"]{
+    justify-content:center;margin-top:16px;padding:16px 18px;
+    font-size:15.5px;font-weight:800;letter-spacing:.01em;
+    color:#0A0B0F;border-radius:14px;
+    background:linear-gradient(135deg,#FFD24A,#F8C018 55%,#FEBE10);
+    box-shadow:0 18px 40px -20px rgba(248,192,24,.85)}
+  html body .drawer__panel a[href="anuncie.html"]:hover{
+    color:#0A0B0F;transform:translateY(-2px);
+    background:linear-gradient(135deg,#FFDD6B,#FFC93A 55%,#FFC61F);
+    box-shadow:0 22px 46px -20px rgba(248,192,24,1)}
+
+  /* ---- entrada escalonada dos itens ---- */
+  html body .drawer.is-open .drawer__panel a{animation:v24-item .34s ease both}
+  html body .drawer.is-open .drawer__panel a:nth-of-type(1){animation-delay:.05s}
+  html body .drawer.is-open .drawer__panel a:nth-of-type(2){animation-delay:.09s}
+  html body .drawer.is-open .drawer__panel a:nth-of-type(3){animation-delay:.13s}
+  html body .drawer.is-open .drawer__panel a:nth-of-type(4){animation-delay:.17s}
+  html body .drawer.is-open .drawer__panel a:nth-of-type(5){animation-delay:.21s}
+  html body .drawer.is-open .drawer__panel a:nth-of-type(6){animation-delay:.25s}
+  html body .drawer.is-open .drawer__panel a:nth-of-type(7){animation-delay:.29s}
+
+  /* ---- tema claro ---- */
+  /* o bundle pinta .drawer de branco no claro; neutraliza para o scrim escuro valer */
+  html[data-theme="light"] body .drawer{background:transparent}
+  html[data-theme="light"] body .drawer__scrim{
+    background:radial-gradient(120% 100% at 100% 0%,rgba(8,104,181,.14),rgba(8,104,181,0) 62%),rgba(10,22,40,.42)}
+  html[data-theme="light"] body .drawer__panel{
+    background:linear-gradient(180deg,#FFFFFF 0%,#F3F7FC 100%);
+    border-left-color:rgba(10,22,40,.10);
+    box-shadow:-30px 0 80px -40px rgba(10,22,40,.5)}
+  html[data-theme="light"] body .drawer__panel::before{
+    background-image:
+      linear-gradient(90deg,#00B8F0,#0868B5 46%,#F8C018),
+      radial-gradient(120% 130% at 88% 2%,rgba(8,104,181,.14),rgba(8,104,181,0) 62%),
+      url("../img/2aab27d3a563.png"),
+      linear-gradient(180deg,#EAF3FC 0%,#DCEBF9 100%)}
+  html[data-theme="light"] body .drawer__panel .drawer__x{
+    color:#0C1A2B;background:rgba(10,22,40,.05);border-color:rgba(10,22,40,.12)}
+  html[data-theme="light"] body .drawer__panel .drawer__x:hover{background:rgba(10,22,40,.12)}
+  html[data-theme="light"] body .drawer__panel a,
+  html[data-theme="light"] body .drawer__panel a[aria-current="page"]{color:#182742}
+  html[data-theme="light"] body .drawer__panel a:hover{
+    background:linear-gradient(90deg,rgba(8,104,181,.12),rgba(8,104,181,0) 85%);color:#0850A0}
+  html[data-theme="light"] body .drawer__panel a[href$="ao-vivo.html"]{color:#0C1A2B}
+  html[data-theme="light"] body .drawer__panel a[href="anuncie.html"],
+  html[data-theme="light"] body .drawer__panel a[href="anuncie.html"]:hover{color:#0A0B0F}
+}
+@media (max-width:760px){
+  html body .drawer__panel{width:min(92vw,352px)}
+  html body .drawer__panel::before{
+    height:132px;
+    background-position:bottom left,center,20px 50%,center;
+    background-size:100% 3px,cover,84px auto,cover}
+}
+@media (prefers-reduced-motion:reduce){
+  html body .drawer.is-open,
+  html body .drawer.is-open .drawer__panel,
+  html body .drawer.is-open .drawer__panel a,
+  html body .drawer__panel a[href$="ao-vivo.html"]::before{animation:none!important}
+}
+@keyframes v24-fade{from{opacity:0}to{opacity:1}}
+@keyframes v24-panel{from{opacity:.45;transform:translateX(96%)}to{opacity:1;transform:translateX(0)}}
+@keyframes v24-item{from{opacity:0}to{opacity:1}}
+@keyframes v24-live{0%{box-shadow:0 0 0 0 rgba(255,59,74,.65)}70%{box-shadow:0 0 0 10px rgba(255,59,74,0)}100%{box-shadow:0 0 0 0 rgba(255,59,74,0)}}
+/* v24-drawer:end */
+/* v26-vao-migalhas:start */
+/* vao de exatamente 7px entre as migalhas (migalhas + data/selo) e o titulo.
+   Zeramos as margens base e controlamos o vao pelo margin-top do h1, porque o
+   h1 ja adiciona a folga de entrelinha acima das letras - e essa folga muda com
+   o font-size do titulo (que cai em @media(max-width:760px)). Valores medidos
+   no browser: .phead 33.6px->folga 7.31px | 21.3px->3.29px
+                 .pghero 46.5px->folga 7.75px | 25.8px->4.40px */
+.phead .crumbs,.phead .tagp,.pghero .crumb,.pghero .chip{margin-bottom:0!important}
+@media(min-width:761px){
+  .phead h1{margin-top:-.31px!important}
+  .pghero h1{margin-top:-.75px!important}
+}
+@media(max-width:760px){
+  .phead h1{margin-top:3.7px!important}
+  .pghero h1{margin-top:2.6px!important}
+}
+/* v26-vao-migalhas:end */
