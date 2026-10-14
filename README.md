@@ -75,6 +75,39 @@ Em `videos.html` foi **removido o subtítulo** "Os 15 vídeos mais recentes da T
 **Verificação:** 24 assertivas de DOM (jsdom) passando, 0 erros nos 9 CSS, 22/22 páginas HTTP 200,
 59 refs de asset no index sem nenhuma quebrada.
 
+## Seção "Programas TV Brasília" abaixo de "Notícias" (v36)
+Nova movimentação da Home: **Programas TV Brasília** (`section--alt`) trocou de lugar com
+**Notícias** (`#noticias`) e passou a ficar **logo abaixo** dela.
+
+| # | Antes | Depois | Seção |
+|---|-------|--------|-------|
+| 1 | `urg` | `urg` | Barra "Urgente" |
+| 2 | `videos` | `videos` | Vídeos do canal (3 fixos + carrossel) |
+| 3 | `progSec` | `progSec` | Programação |
+| 4 | `section--alt` | **`noticias`** | **Notícias** (subiu) |
+| 5 | `noticias` | **`section--alt`** | **Programas TV Brasília** (desceu para abaixo de Notícias) |
+| 6 | `anuncie` | `anuncie` | Anuncie aqui |
+| 7 | `shortsSec` | `shortsSec` | Shorts |
+| 8 | `pollSec` | `pollSec` | Enquete |
+
+**Ordem final:** `urg → videos → progSec → noticias → Programas TV Brasília → anuncie → shortsSec → pollSec`.
+
+**Como foi feito (e por que é seguro).** É a troca de **dois blocos adjacentes**:
+
+- os dois blocos são **encostados** — Notícias começa exatamente no byte onde Programas termina,
+  então não existe nenhum HTML entre eles que a troca pudesse arrastar ou perder;
+- cada bloco tem 1 `<section>` / 1 `</section>`, 0 `<style>` e 0 `<script>`;
+- fora do par, o arquivo permanece **byte-idêntico** (cabeça e cauda conferidas);
+- `len()` preservado: **175973** caracteres (176601 bytes);
+- contagens preservadas: 8 `<section>`, 8 `</section>`, 1 `</main>`, 0 `<main>`, 11 `<style>`, 11 `<script>`;
+- **0 seletores irmãos** entre as seções (`+`/`~`) nos 8 bundles e nos 11 `<style>` inline — as regras
+  de `.section--alt` e `.home-flat-news` são por classe/descendente e **não dependem da ordem**;
+  nenhuma referência a essas seções no JS.
+
+> **Cuidado na verificação (importante).** Esta troca **preserva o tamanho do arquivo byte a byte**,
+> então comparar `Content-Length` local × live **não** detecta a mudança (dá falso "MATCH"). A
+> conferência correta é por **ordem das seções** ou por hash do arquivo.
+
 ## Arquitetura de dados
 - **Sem backend**: nenhum dado é gravado no servidor. Todo o estado é local.
 - **Estado no navegador**:
