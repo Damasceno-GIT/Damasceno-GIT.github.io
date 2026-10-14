@@ -2586,4 +2586,16 @@ html:root body #v10slider .dots{
  background:rgba(6,9,15,.66)!important;box-shadow:0 6px 18px rgba(0,0,0,.45)!important}
 html:root body #v10slider .dots button{width:18px!important;height:4px!important}
 html:root body #v10slider .dots button[aria-selected="true"]{width:30px!important}
+/* -- arte dos banners: parar ABAIXO do menu fixo -------------------------
+   A arte e quadrada (900x900) e o texto dela comeca em ~20% do topo. Com o
+   topo da midia em 0 (v29), essa linha caia sob o menu e desaparecia. Aqui a
+   caixa da arte comeca logo abaixo do menu e a arte passa a preencher por
+   "cover" -- sem tarja escura nas laterais e sem cortar o texto. ---------- */
+html:root body #v10slider.slider div.slide--banner.slide--institutional-full .slide__media,html:root body #v10slider.slider div.slide--banner.slide--df-full .slide__media .slide__media{
+ top:calc(var(--site-menu-top,52px) + 64px)!important;
+ bottom:0!important;left:0!important;right:0!important;
+ height:auto!important;max-height:none!important;
+ background-size:cover!important;
+ background-position:center center!important;
+ background-repeat:no-repeat!important}
 }/* v33-mobile-carrossel:end */

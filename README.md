@@ -264,17 +264,23 @@ Pedido: **uma seção nova abaixo da linha de URGENTE, sem títulos, em carrosse
 ### v33 — Responsivo do carrossel da capa no celular (correção do v29/v30)
 Pedido: *"ajustar o responsivo do carrossel na versão mobile, melhorar alinhamentos das fontes dos slides de matérias, ter um espaçamento maior da parte superior, os bullets points"*.
 
-**O que a captura mostrava.** No celular: o título *"TODA A FAMÍLIA"* cortado pelo menu escuro no topo, as bolinhas alinhadas à **esquerda** (não centralizadas) e quase coladas na borda inferior do carrossel.
+**O que a captura mostrava.** No celular: o texto *"COM UMA GRADE PROGRAMAÇÃO…"* e o título *"TODA A FAMÍLIA"* cortados pelo menu escuro no topo, as bolinhas alinhadas à **esquerda** (não centralizadas) e quase coladas na borda inferior do carrossel.
 
 **Causa raiz (uma regressão minha, em duas versões).**
 1. O **v29** zerou o topo da `.slide__media` (`top:0!important`) para a arte 900×900 preencher os 450px de altura. Isso era necessário para os banners — mas **apagou o recuo que os slides de matéria usavam para começar abaixo do menu fixo** (a mídia começava em `--hero-media-top`, ~78px).
 2. O **v30** então compensou fixando `padding-top:60px`, um valor **medido contra a geometria antiga**. Com o topo da mídia zerado, esses 60px passaram a ficar rentes ao menu — o texto subiu para baixo da barra.
 
-**A correção.** O recuo volta a ser **derivado do menu**, não um número mágico — a fórmula que o próprio design system já usa (`calc(var(--site-menu-top) + 88px)`), e o v33 entra **antes** da regra antiga na cascata, então `--news-copy-top` continua valendo onde é maior (telas baixas, `--hero-copy-min`). Os indicadores voltam ao centro e ganharam 24px de respiro da borda.
+**Uma segunda regressão, na mesma origem.** Com a mídia começando em `top:0`, a **arte dos banners** também passou a começar no topo do slide. Como ela é quadrada (900×900) e entrava em `contain` dentro dos 450px, ocupava y=30..420 — e o menu fixo cobre até y=110. Os três banners têm conteúdo **no topo**: medido na própria arte, o primeiro texto denso está em `y=101` (família), `y=0` (DF Alerta) e `y=0` (Anuncie) num arquivo de 900px. Ou seja, **o menu escondia a faixa de 0–12% da arte**, que é justamente onde o texto começa.
+
+**A correção.** O v33 faz duas coisas, as duas derivadas do menu e não de números mágicos:
+1. **Texto das matérias** — o recuo volta a ser `calc(var(--site-menu-top) + 88px)`, a mesma fórmula que o próprio design system usa, e o v33 entra **antes** das regras antigas na cascata, então `--news-copy-top` continua valendo onde for maior (telas baixas, `--hero-copy-min`).
+2. **Arte dos banners** — a caixa da arte passa a começar **exatamente onde o menu termina** (`top:calc(var(--site-menu-top) + 64px)` = 110px no celular) e a arte preenche por **`cover`**, sem tarja escura nas laterais e sem cortar o texto.
 
 | | antes (v29/v30) | depois (v33) |
 |---|---|---|
-| respiro do topo | `60px` fixo (rente ao menu) | `calc(--site-menu-top + 88px)` |
+| respiro do topo (matéria) | `60px` fixo (rente ao menu) | `calc(--site-menu-top + 88px)` |
+| caixa da arte (banner) | `top:0` (sob o menu) | `calc(--site-menu-top + 64px)` = 110px |
+| arte do banner | `contain` (tarja de 30px em cima/baixo) | `cover` (preenche, sem tarja) |
 | bolinhas | `justify-content:flex-start`, `bottom:14px` | `center`, `bottom:24px` |
 | título | 17px / `line-height:1.22` | 17px / `line-height:1.26` |
 | descrição | 12,5px, 3 linhas | 12,5px, 3 linhas, `margin-top:10px` |
@@ -285,9 +291,11 @@ Pedido: *"ajustar o responsivo do carrossel na versão mobile, melhorar alinhame
 2. **`#v10slider.slider`** → 1 id, que vence qualquer seletor sem id;
 3. **`div.slide--news`** (em vez de `.slide--news`) → o `div` é um **elemento**, somando na terceira coluna e desempatando contra o v30, que usa a mesma forma sem o `div`.
 
-Resultado medido com um **resolvedor de cascata** (tinycss2 + expansão de shorthands + ordem do documento): `esp=(1,4,3)` do v33 contra `(1,2,2)` do v30 e `(0,6,6)` do bloco inline de 14px — vence os dois. Em 1280px o v33 **não se aplica** (media `max-width:760px`), portanto o desktop fica intocado.
+Para os banners a conta é um pouco maior, e isso foi **medido, não suposto**: o v29 declara `background-size:contain` com o seletor `.slide--institutional-full:has(img[src*="…"])`, que vale `(1,5,3)` — mais alto que um seletor com uma classe só. A primeira versão do meu v33 usava `div.slide--banner` e **perdia** nesses dois banners, mas **ganhava** no DF Alerta: o resultado seria inconsistente entre slides. Corrigido somando as **duas** classes úteis de cada banner (`div.slide--banner.slide--institutional-full` e `div.slide--banner.slide--df-full`), o que leva o v33 a **`(1,6,3)`** e vence os três.
 
-> **Nota de método.** A primeira versão do meu resolvedor dava resultado **invertido**: calculava a especificidade só do *último* composto do seletor (todos colapsavam em `(0,1,0)`) e, em empate, mantinha a *primeira* regra em vez da última. Foi corrigido (seletor inteiro + última vence) antes de qualquer conclusão ser tirada.
+Resultado medido com um **resolvedor de cascata** (tinycss2 + expansão de shorthands + ordem do documento): texto `(1,4,3)` contra `(1,2,2)` do v30 e `(0,6,6)` do bloco inline de 14px; arte dos banners `(1,6,3)` contra `(1,5,3)` do v29. O `.slide__link` continua cobrindo a caixa inteira, então o banner segue clicável. Em 1280px o v33 **não se aplica** (media `max-width:760px`), portanto o desktop fica intocado.
+
+> **Nota de método.** A primeira versão do meu resolvedor dava resultado **invertido**: calculava a especificidade só do *último* composto do seletor (todos colapsavam em `(0,1,0)`) e, em empate, mantinha a *primeira* regra em vez da última. Foi corrigido (seletor inteiro + última vence) antes de qualquer conclusão ser tirada — e foi ele que pegou o empate perdido do `background-size`, que a olho nu passaria.
 
 - Cobertura: apenas `site-7830ebdce1.css` — o script tem um **portão** que aborta se o arquivo não contiver `#v10slider`, `slide--news` e `.dots-wrap`.
 - Script: `.tools/v33_mobile_carrossel.py`
