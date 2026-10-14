@@ -13,6 +13,43 @@
 
 > O site é publicado na **raiz** do user site (`Damasceno-GIT.github.io`), portanto todos os caminhos relativos (`assets/...`, `programas.html`) funcionam sem prefixo.
 
+## Ordem das seções da Home (v34 — movimentação)
+A Home (`index.html`) tem 8 seções de primeiro nível. Elas foram **reordenadas** conforme solicitado:
+
+| # | Antes | Depois | Seção |
+|---|-------|--------|-------|
+| 1 | `urg` | `urg` | Barra "Urgente" |
+| 2 | `videos` | `videos` | Vídeos do canal (3 fixos + carrossel) |
+| 3 | `noticias` | **`progSec`** | **Programação** (subiu para logo após os vídeos) |
+| 4 | `section--alt` | **`section--alt`** | **Programas TV Brasília** (desceu para abaixo de Programação) |
+| 5 | `progSec` | **`noticias`** | **Notícias** (desceu para abaixo de Programas) |
+| 6 | `shortsSec` | **`anuncie`** | **Anuncie aqui** (subiu para abaixo de Notícias) |
+| 7 | `anuncie` | **`shortsSec`** | **Shorts** (desceu para abaixo de Anuncie) |
+| 8 | `pollSec` | `pollSec` | Enquete |
+
+**Como foi feito (e por que é seguro).** Cada `<section>…</section>` foi tratado como bloco
+indivisível e apenas a **ordem dos blocos** mudou. Provas de integridade aplicadas antes de gravar:
+
+- o fatiamento recompõe o arquivo original byte a byte;
+- cada bloco tem exatamente 1 `<section>` e 1 `</section>` (nenhuma seção aninhada);
+- o **multiconjunto** dos 8 blocos é idêntico (nada duplicado nem perdido);
+- o conteúdo **fora** das seções é byte-idêntico;
+- `len()` do arquivo permanece **176150** caracteres (176778 bytes);
+- contagens preservadas: 8 `<section>`, 8 `</section>`, 1 `</main>`, 0 `<main>`, 11 `<style>`, 11 `</style>`, 11 `<script>`.
+
+**Sem impacto em CSS ou JS:**
+
+- **0 seletores irmãos** entre as seções em qualquer um dos 8 bundles (`+` / `~` entre `#noticias`,
+  `#progSec`, `#shortsSec`, `#anuncie`, `.home-flat-news`, `.home-flat-shorts`), então a cascata
+  não depende da ordem;
+- **nenhum `<script>` dentro de seções** — nenhum JS depende da posição;
+- o "intervalo" que existia entre `#progSec` e `#shortsSec` continha **apenas dois `<style>` inline**
+  (`#v21-shorts` e `#v20-hero-arrows`) e nenhum HTML. Como esses dois são os **primeiros** estilos
+  inline do documento (todos os outros estão depois do `</main>`), foram movidos para
+  imediatamente antes do `</main>` — assim a **ordem de cascata permanece exatamente a mesma**.
+- **Defeito pré-existente preservado**: existe um `</main>` **sem `<main>` de abertura** (posição
+  original 68280). Não foi criado nem removido — continua como estava.
+
 ## Arquitetura de dados
 - **Sem backend**: nenhum dado é gravado no servidor. Todo o estado é local.
 - **Estado no navegador**:
