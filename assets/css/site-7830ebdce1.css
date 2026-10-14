@@ -2591,8 +2591,8 @@ html:root body #v10slider .dots button[aria-selected="true"]{width:30px!importan
    topo da midia em 0 (v29), essa linha caia sob o menu e desaparecia. Aqui a
    caixa da arte comeca logo abaixo do menu e a arte passa a preencher por
    "cover" -- sem tarja escura nas laterais e sem cortar o texto. ---------- */
-html:root body #v10slider.slider div.slide--banner.slide--institutional-full .slide__media,html:root body #v10slider.slider div.slide--banner.slide--df-full .slide__media .slide__media{
- top:calc(var(--site-menu-top,52px) + 64px)!important;
+html:root body #v10slider.slider div.slide--banner.slide--institutional-full .slide__media,html:root body #v10slider.slider div.slide--banner.slide--df-full .slide__media{
+ top:calc(var(--site-menu-top,52px) + 66px)!important;
  bottom:0!important;left:0!important;right:0!important;
  height:auto!important;max-height:none!important;
  background-size:cover!important;

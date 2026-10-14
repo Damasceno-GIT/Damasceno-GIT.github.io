@@ -274,12 +274,12 @@ Pedido: *"ajustar o responsivo do carrossel na versão mobile, melhorar alinhame
 
 **A correção.** O v33 faz duas coisas, as duas derivadas do menu e não de números mágicos:
 1. **Texto das matérias** — o recuo volta a ser `calc(var(--site-menu-top) + 88px)`, a mesma fórmula que o próprio design system usa, e o v33 entra **antes** das regras antigas na cascata, então `--news-copy-top` continua valendo onde for maior (telas baixas, `--hero-copy-min`).
-2. **Arte dos banners** — a caixa da arte passa a começar **exatamente onde o menu termina** (`top:calc(var(--site-menu-top) + 64px)` = 110px no celular) e a arte preenche por **`cover`**, sem tarja escura nas laterais e sem cortar o texto.
+2. **Arte dos banners** — a caixa da arte passa a começar **exatamente onde o menu termina** (`top:calc(var(--site-menu-top) + 66px)` = 112px no celular (46px do socialbar + 66px do `nav__in`)) e a arte preenche por **`cover`**, sem tarja escura nas laterais e sem cortar o texto.
 
 | | antes (v29/v30) | depois (v33) |
 |---|---|---|
 | respiro do topo (matéria) | `60px` fixo (rente ao menu) | `calc(--site-menu-top + 88px)` |
-| caixa da arte (banner) | `top:0` (sob o menu) | `calc(--site-menu-top + 64px)` = 110px |
+| caixa da arte (banner) | `top:0` (sob o menu) | `calc(--site-menu-top + 66px)` = 112px |
 | arte do banner | `contain` (tarja de 30px em cima/baixo) | `cover` (preenche, sem tarja) |
 | bolinhas | `justify-content:flex-start`, `bottom:14px` | `center`, `bottom:24px` |
 | título | 17px / `line-height:1.22` | 17px / `line-height:1.26` |
@@ -291,9 +291,11 @@ Pedido: *"ajustar o responsivo do carrossel na versão mobile, melhorar alinhame
 2. **`#v10slider.slider`** → 1 id, que vence qualquer seletor sem id;
 3. **`div.slide--news`** (em vez de `.slide--news`) → o `div` é um **elemento**, somando na terceira coluna e desempatando contra o v30, que usa a mesma forma sem o `div`.
 
-Para os banners a conta é um pouco maior, e isso foi **medido, não suposto**: o v29 declara `background-size:contain` com o seletor `.slide--institutional-full:has(img[src*="…"])`, que vale `(1,5,3)` — mais alto que um seletor com uma classe só. A primeira versão do meu v33 usava `div.slide--banner` e **perdia** nesses dois banners, mas **ganhava** no DF Alerta: o resultado seria inconsistente entre slides. Corrigido somando as **duas** classes úteis de cada banner (`div.slide--banner.slide--institutional-full` e `div.slide--banner.slide--df-full`), o que leva o v33 a **`(1,6,3)`** e vence os três.
+Para os banners a conta é um pouco maior, e isso foi **medido, não suposto**: o v29 declara `background-size:contain` no seletor `.slide--institutional-full:has(img[src*="…"])`, e `:has()` mais `[src*=…]` valem **1 classe cada**, o que leva esse seletor a `(1,4,3)`. O v33, somando as **duas** classes úteis do banner (`div.slide--banner` + a variante), também chega a `(1,4,3)` — ou seja, **empate**, decidido pela **ordem do documento**. Como o bloco do v33 é sempre reanexado no **fim** do bundle, ele fica depois das regras do v29 e vence nos três banners. No DF Alerta não há seletor `:has()` concorrente, então ali o v33 ganha por especificidade mesmo.
 
-Resultado medido com um **resolvedor de cascata** (tinycss2 + expansão de shorthands + ordem do documento): texto `(1,4,3)` contra `(1,2,2)` do v30 e `(0,6,6)` do bloco inline de 14px; arte dos banners `(1,6,3)` contra `(1,5,3)` do v29. O `.slide__link` continua cobrindo a caixa inteira, então o banner segue clicável. Em 1280px o v33 **não se aplica** (media `max-width:760px`), portanto o desktop fica intocado.
+> **Um bug meu, pego na revisão.** Ao montar a lista de seletores eu deixei `.slide__media` só no último ramo. Numa lista separada por vírgula o sufixo se aplica **apenas ao último ramo**: o primeiro ficou sem `.slide__media` e passou a apontar para o **próprio card do slide** (aplicando `top/bottom/height/background-size` no container) — pior que o problema original. Corrigido montando a lista **ramo a ramo**, com `.slide__media` em cada um.
+
+Resultado medido com um **resolvedor de cascata** (tinycss2 + expansão de shorthands + ordem do documento): texto `(1,3,3)` contra `(1,1,2)` do v30 e `(1,1,3)` do bloco inline que fixa 14px; arte dos banners `(1,4,3)` vencendo nos **três** cards. O `.slide__link` continua cobrindo a caixa inteira, então o banner segue clicável. Em 1280px o v33 **não se aplica** (media `max-width:760px`), portanto o desktop fica intocado.
 
 > **Nota de método.** A primeira versão do meu resolvedor dava resultado **invertido**: calculava a especificidade só do *último* composto do seletor (todos colapsavam em `(0,1,0)`) e, em empate, mantinha a *primeira* regra em vez da última. Foi corrigido (seletor inteiro + última vence) antes de qualquer conclusão ser tirada — e foi ele que pegou o empate perdido do `background-size`, que a olho nu passaria.
 
