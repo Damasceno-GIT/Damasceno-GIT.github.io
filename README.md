@@ -65,9 +65,12 @@ Em `videos.html` foi **removido o subtítulo** "Os 15 vídeos mais recentes da T
 (o `<p class="vtsub">`). O `<h1>Vídeos do canal</h1>` permanece. O mesmo texto continua apenas na
 `<meta name="description">`, que **não é visível** na página.
 
-**Sobre o CTA removido:** `videos.html` continua alcançável — o **menu "Notícias"**? não; o caminho é
-pela **página do vídeo** (`video.html`), que mantém o botão "Ver tudo". O ajuste foi feito na última
-linha do gerador (`secao_index()`), então uma nova execução não traz o botão de volta.
+> **Efeito colateral a considerar.** Com o CTA fora da Home, `videos.html` passa a ter **um único
+> caminho de entrada**: o botão "Ver tudo" que existe em `video.html` (a página de cada vídeo).
+> O menu principal não tem item "Vídeos", então quem abre a Home não chega à grade completa
+> sem antes abrir um vídeo. Se a intenção for manter a página visível, o mais natural é um link
+> no menu — basta avisar. O ajuste está na última linha de `secao_index()` no gerador, então rodar
+> o script de novo não traz o botão de volta.
 
 **Verificação:** 24 assertivas de DOM (jsdom) passando, 0 erros nos 9 CSS, 22/22 páginas HTTP 200,
 59 refs de asset no index sem nenhuma quebrada.
