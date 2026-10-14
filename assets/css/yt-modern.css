@@ -326,3 +326,12 @@ html[data-theme="light"] .vtsec{--vtfade:#F4F7FB}
   .vtile:hover .vtile__thumb img{transform:none}
   .vtcta:hover{transform:none}
 }
+
+/* v38-cta-pc:start */
+/* O CTA "Ver tudo" da secao de videos da Home aparece SOMENTE no PC.
+   Em tablet e celular (ate 1180px) ele fica oculto. O seletor usa #videos,
+   que so existe na Home -- em video.html / videos.html nada muda. */
+@media (max-width:1180px){
+  #videos .vtcta{display:none}
+}
+/* v38-cta-pc:end */

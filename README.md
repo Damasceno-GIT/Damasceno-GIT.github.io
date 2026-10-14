@@ -57,7 +57,7 @@ Ajustes pedidos para a faixa de vídeos (a que fica entre a barra "Urgente" e a 
 |---|---|---|
 | 3 vídeos fixos | 3 colunas espremidas, título cortado em 2 linhas, sem data | **um embaixo do outro**, largura toda, título até 3 linhas, com data/posição |
 | Rodapé do carrossel | setas e bullets encostados à **esquerda** | **centralizados** (`.vtcar__foot` e `.vtcar__ctrl` com `justify-content:center`) |
-| CTA "Ver tudo" | botão azul abaixo do carrossel | **removido** da seção |
+| CTA "Ver tudo" | botão azul abaixo do carrossel | **removido** da seção (⚠️ **revertido na v38** — o botão voltou, agora só no PC) |
 | Título do card fixo | 11,5 px (compacto para caber em 3 colunas) | **13,5 px** (tamanho do card normal) |
 | Etiqueta do programa | 8,5 px | **9,5 px** |
 
@@ -65,12 +65,11 @@ Em `videos.html` foi **removido o subtítulo** "Os 15 vídeos mais recentes da T
 (o `<p class="vtsub">`). O `<h1>Vídeos do canal</h1>` permanece. O mesmo texto continua apenas na
 `<meta name="description">`, que **não é visível** na página.
 
-> **Efeito colateral a considerar.** Com o CTA fora da Home, `videos.html` passa a ter **um único
+> **Efeito colateral — resolvido na v38.** Com o CTA fora da Home, `videos.html` tinha **um único
 > caminho de entrada**: o botão "Ver tudo" que existe em `video.html` (a página de cada vídeo).
-> O menu principal não tem item "Vídeos", então quem abre a Home não chega à grade completa
-> sem antes abrir um vídeo. Se a intenção for manter a página visível, o mais natural é um link
-> no menu — basta avisar. O ajuste está na última linha de `secao_index()` no gerador, então rodar
-> o script de novo não traz o botão de volta.
+> O menu principal não tem item "Vídeos", então quem abria a Home não chegava à grade completa
+> sem antes abrir um vídeo. A **v38 devolveu o botão à Home**, visível **apenas no PC** (ver a
+> seção da v38 abaixo). O ponto de entrada pela Home voltou.
 
 **Verificação:** 24 assertivas de DOM (jsdom) passando, 0 erros nos 9 CSS, 22/22 páginas HTTP 200,
 59 refs de asset no index sem nenhuma quebrada.
@@ -157,9 +156,70 @@ publicada pela emissora"). As 7 páginas passaram a exibir **8 cartões reais**.
 canônico) e, por página, asserções de conta de tamanho, ordem, ausência de duplicação e de
 **identidade byte a byte fora do bloco**.
 
-**Verificação:** 7/7 páginas com a ordem `#episodios < #sinopse < #horarios` (local **e live**),
-8 cartões por página, playlist presente, 0 `.plph`; 22/22 páginas HTTP 200; 8/8 thumbnails
-`i.ytimg.com` HTTP 200; 0 erros nos 9 CSS.
+**Verificação (na época, v37):** 7/7 páginas com a ordem `#episodios < #sinopse < #horarios`
+(local **e live**), 8 cartões por página, playlist citada no CTA, 0 `.plph`; 22/22 páginas HTTP 200;
+8/8 thumbnails `i.ytimg.com` HTTP 200; 0 erros nos 9 CSS.
+
+> ⚠️ **Superado pela v38**: o título, o subtítulo e o CTA da playlist foram **removidos** do bloco
+> e a playlist deixou de ser citada nas páginas. Ver a seção da v38 abaixo.
+
+## Seção de vídeos das páginas de programa + CTA "Ver tudo" só no PC (v38)
+Dois pedidos, num só patcher.
+
+**(a) Nas 7 páginas de programa — deixar só os vídeos.** Na seção de vídeos (`#episodios`):
+
+| Item | Antes | Depois |
+|---|---|---|
+| Título + subtítulo | `<div class="sec-head">` com "Últimos episódios" e o subtítulo "Trechos e reportagens publicados recentemente…" | **removido** (só os vídeos) |
+| CTA da playlist | `<div class="more-row">` com "Ver a playlist do DF Alerta no YouTube" | **removido** |
+| Linha separando da Sinopse | não existia | **linha sutil** (ver abaixo) |
+| 8 cartões | 8 | **8, intactos** |
+
+Como o `<h2>` visível sai, a própria `<section>` recebeu **`aria-label="Últimos episódios"`** —
+o leitor de tela não perde o nome da seção. O bloco ficou `section > wrap > epgrid`, com
+`border-bottom` fechando a faixa.
+
+**A linha separadora.** Usei **o mesmo idioma de linha que o site já tinha**, em vez de inventar
+um componente: `#episodios{border-bottom:1px solid var(--line)}`. O token `--line` já existe no
+bundle (escuro `rgba(255,255,255,.10)`, claro `rgba(10,22,40,.13)`), então a linha **acompanha o
+tema** sem nenhum CSS extra. Vai no `assets/css/site-b4e64e43cf.css`, que é o bundle **exclusivo**
+das 7 páginas de programa.
+
+**(b) Na Home — o CTA "Ver tudo" volta, só no PC.** O botão havia sido **removido por completo**
+na v35; foi **reinserido byte a byte** como era na v34 (`<a class="vtcta" href="videos.html">Ver
+tudo` + o ícone de seta), logo depois de `.vtcar__bar`. A visibilidade é feita no
+`assets/css/yt-modern.css`:
+
+```css
+@media (max-width:1180px){ #videos .vtcta{display:none} }
+```
+
+- **Corte em 1180 px** = o teto da escala de breakpoints documentada no guia de estilo do próprio
+  site (`fundamentos.html`: *"Breakpoints: 760, 980, 1180 px"*). Assim o CTA aparece **só em PC**:
+  tablet deitado (1024 px) e retrato (760 px) ficam **sem** o botão.
+- O seletor é **`#videos .vtcta`**, e `id="videos"` existe **apenas no `index.html`** — então
+  `video.html` e `videos.html` (que também usam `.vtcta`) **não mudam em nada**. Conferido na
+  cascata real (`tinycss2`): em 1181 px vence a regra base (`display:inline-flex`); em 1180 px
+  vence a `display:none`.
+
+**Integridade (o que prova que nada mais mudou).**
+
+- **Fora do bloco, byte a byte idêntico**: em cada uma das 7 páginas, o texto antes e depois de
+  `#episodios` é exatamente o mesmo do arquivo anterior (`cabeça` e `cauda` conferidas).
+- Contagens globais preservadas: 4 `<section>` / 4 `</section>`, mesmos `<script>` e `<link>`,
+  mesma quantidade de cartões.
+- O bloco limpo é **idêntico nas 7 páginas** (`md5 0a9d95099f9e`, 5167 caracteres).
+- Home: o texto é igual ao anterior **mais** exatamente os 177 bytes do CTA (removendo o CTA,
+  volta a ser byte-idêntico ao original).
+- **0 erros** nos 9 CSS (`tinycss2`); chaves balanceadas antes e depois.
+- Os dois geradores foram sincronizados: `.tools/v33_videos.py` voltou a **emitir** o CTA (e não
+  reverte a v38 se for rodado), e o portão de `.tools/v37_episodios.py` **não exige mais a
+  playlist** (o CTA saiu). Patcher: `.tools/v38_programas_cta.py` (idempotente — reexecutar não
+  altera nada; conferido por `diff`).
+
+> **Nota.** A playlist `PLHAcFePwq-6P2cH6gS4aSFcE3MypxeEWp` deixou de ser citada em **qualquer
+> página** do site: ela existia só no CTA que foi removido. Quando cada programa tiver a sua
+> playlist, o lugar natural do link é este botão (ou um no cabeçalho da seção).
 
 ## Arquitetura de dados
 - **Sem backend**: nenhum dado é gravado no servidor. Todo o estado é local.
@@ -532,7 +592,7 @@ A primeira versão do gerador **esqueceu** `data-vskip="3"` no HTML. O resultado
 ## Guia de uso
 1. Abra https://damasceno-git.github.io/
 2. No carrossel da capa, use as setas (ou `←`/`→` com o carrossel focado) para navegar entre os destaques.
-3. Logo abaixo da linha **URGENTE** estão os **vídeos do canal**: três fixos e, abaixo, um carrossel de cinco por vez. As setas pequenas e os indicadores ficam **sob os vídeos**, no mesmo rodapé do CTA **VER TUDO**.
+3. Logo abaixo da linha **URGENTE** estão os **vídeos do canal**: três fixos e, abaixo, um carrossel de cinco por vez. As setas pequenas e os indicadores ficam **sob os vídeos**, no mesmo rodapé do CTA **VER TUDO** (o botão aparece **só no PC**: em tablet e celular ele fica oculto).
 4. Clique em qualquer vídeo para abrir a **página do vídeo**; embaixo dela aparecem os outros vídeos em carrossel, sem repetir o que está tocando.
 5. **VER TUDO** leva à página `videos.html`, com os 15 vídeos em grade.
 6. Role até **Shorts** e clique em um card: o vídeo abre em um player no meio da tela. `Esc` fecha.

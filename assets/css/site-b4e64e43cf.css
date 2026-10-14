@@ -1760,3 +1760,9 @@ html[data-theme="light"] .navwrap::before,html[data-theme="light"] .navwrap::aft
   html body .progs.progs{grid-template-columns:repeat(2,1fr)!important}
 }
 /* v28-programas-2col:end */
+
+/* v38-episodios-linha:start */
+/* Linha sutil entre a secao de videos (#episodios) e a Sinopse, nas paginas
+   de programa. Usa o token --line do site, entao acompanha o tema claro/escuro. */
+#episodios{border-bottom:1px solid var(--line)}
+/* v38-episodios-linha:end */
