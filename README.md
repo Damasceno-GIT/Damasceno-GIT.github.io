@@ -108,6 +108,59 @@ Nova movimentação da Home: **Programas TV Brasília** (`section--alt`) trocou 
 > então comparar `Content-Length` local × live **não** detecta a mudança (dá falso "MATCH"). A
 > conferência correta é por **ordem das seções** ou por hash do arquivo.
 
+## Seção "Últimos episódios" acima de "Sinopse" (v37)
+Pedido: na página **DF Alerta**, a seção de vídeos com o título **"Últimos episódios"** deveria
+**subir para cima** da seção **Sinopse** — e o mesmo em **todas as outras páginas de programa**,
+usando **a mesma playlist para todos**.
+
+| # | Antes (DF Alerta e demais) | Depois (as 7 páginas) | Seção |
+|---|---|---|---|
+| 1 | `#sinopse` | **`#episodios`** | **Últimos episódios** (subiu) |
+| 2 | `#horarios` (`section--alt`) | `#sinopse` | Sinopse |
+| 3 | `#episodios` | `#horarios` (`section--alt`) | Horários |
+| 4 | `section--tight` | `section--tight` | Ficha do programa |
+
+**Ordem final** (logo depois de `<main id="conteudo">`):
+`#episodios → #sinopse → #horarios → Ficha do programa`.
+
+**Decisão do cliente sobre a origem dos cartões.** Perguntado se os cartões deveriam ser
+**gerados a partir da playlist** ou **replicados do DF Alerta**, a resposta foi a **opção 2 —
+replicar do DF Alerta**. Então o bloco do DF Alerta foi **copiado literalmente** para as outras 6
+páginas (nas quais antes havia apenas **cards-placeholder** `.plph`, "Playlist oficial ainda não
+publicada pela emissora"). As 7 páginas passaram a exibir **8 cartões reais**.
+
+**Playlist única.** Todas as páginas usam
+[PLHAcFePwq-6P2cH6gS4aSFcE3MypxeEWp](https://www.youtube.com/playlist?list=PLHAcFePwq-6P2cH6gS4aSFcE3MypxeEWp)
+(confirmado pelo cliente: **provisório** — "no futuro cada programa terá a sua").
+
+**Como foi feito (e por que é seguro).**
+
+- O bloco canônico foi extraído do DF Alerta: **5627 bytes / 5582 caracteres**, md5 `a79ae5e2136f`,
+  **1 `<section>`** (`class="section" id="episodios"`), **8 cartões** `class="epcard"`, **8 ids de
+  vídeo únicos**, 0 `<script>`, 0 `<style>`, e a playlist citada no botão **"Ver a playlist do DF
+  Alerta no YouTube"**.
+- O bloco é **byte-idêntico** nas 7 páginas (`identico_ao_canonico=True` para todas).
+- **Nada fora do bloco mudou.** Em cada página, removido o bloco novo, o HTML volta a ser
+  **byte-idêntico** ao que era antes (`fora-do-bloco idêntico` conferido página a página). Os
+  tamanhos crescem exatamente o tamanho do bloco copiado (as 6 páginas-placeholder) e o DF Alerta,
+  que só **moveu** o bloco, manteve o tamanho (**122985 bytes / 122797 caracteres**).
+- Contagens preservadas por página: **4 `<section>` / 4 `</section>`**, 1 `<main>`, 1 `</main>`,
+  mesmo número de `<link>` e `<script>`.
+- **Nenhum id duplicado** e nenhuma referência a `#episodios`/`#sinopse` no JS — as regras
+  `.epgrid` / `.epcard*` / `.plph` são por classe e **não dependem da ordem**.
+
+> **Nota sobre o texto do botão.** Como os cartões foram **replicados** (opção 2), o botão continua
+> dizendo **"Ver a playlist do DF Alerta no YouTube"** nas 7 páginas. É consequência direta da
+> escolha; quando cada programa tiver a sua playlist, basta atualizar bloco e texto juntos.
+
+**Script:** `.tools/v37_episodios.py` — patcher **idempotente**, com `portao()` (valida o bloco
+canônico) e, por página, asserções de conta de tamanho, ordem, ausência de duplicação e de
+**identidade byte a byte fora do bloco**.
+
+**Verificação:** 7/7 páginas com a ordem `#episodios < #sinopse < #horarios` (local **e live**),
+8 cartões por página, playlist presente, 0 `.plph`; 22/22 páginas HTTP 200; 8/8 thumbnails
+`i.ytimg.com` HTTP 200; 0 erros nos 9 CSS.
+
 ## Arquitetura de dados
 - **Sem backend**: nenhum dado é gravado no servidor. Todo o estado é local.
 - **Estado no navegador**:
