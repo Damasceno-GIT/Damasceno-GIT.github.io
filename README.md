@@ -261,6 +261,38 @@ Pedido: **uma seção nova abaixo da linha de URGENTE, sem títulos, em carrosse
 
 **Validação:** 31 asserções automatizadas em DOM real (jsdom) — 15 cards, ordem idêntica ao feed, miniaturas existentes em disco, 5 indicadores, seta anterior desabilitada no início, `iframe` com o ID certo em `youtube-nocookie`, exclusão do vídeo atual, e os dois casos de fallback. Todas passaram.
 
+### v33 — Responsivo do carrossel da capa no celular (correção do v29/v30)
+Pedido: *"ajustar o responsivo do carrossel na versão mobile, melhorar alinhamentos das fontes dos slides de matérias, ter um espaçamento maior da parte superior, os bullets points"*.
+
+**O que a captura mostrava.** No celular: o título *"TODA A FAMÍLIA"* cortado pelo menu escuro no topo, as bolinhas alinhadas à **esquerda** (não centralizadas) e quase coladas na borda inferior do carrossel.
+
+**Causa raiz (uma regressão minha, em duas versões).**
+1. O **v29** zerou o topo da `.slide__media` (`top:0!important`) para a arte 900×900 preencher os 450px de altura. Isso era necessário para os banners — mas **apagou o recuo que os slides de matéria usavam para começar abaixo do menu fixo** (a mídia começava em `--hero-media-top`, ~78px).
+2. O **v30** então compensou fixando `padding-top:60px`, um valor **medido contra a geometria antiga**. Com o topo da mídia zerado, esses 60px passaram a ficar rentes ao menu — o texto subiu para baixo da barra.
+
+**A correção.** O recuo volta a ser **derivado do menu**, não um número mágico — a fórmula que o próprio design system já usa (`calc(var(--site-menu-top) + 88px)`), e o v33 entra **antes** da regra antiga na cascata, então `--news-copy-top` continua valendo onde é maior (telas baixas, `--hero-copy-min`). Os indicadores voltam ao centro e ganharam 24px de respiro da borda.
+
+| | antes (v29/v30) | depois (v33) |
+|---|---|---|
+| respiro do topo | `60px` fixo (rente ao menu) | `calc(--site-menu-top + 88px)` |
+| bolinhas | `justify-content:flex-start`, `bottom:14px` | `center`, `bottom:24px` |
+| título | 17px / `line-height:1.22` | 17px / `line-height:1.26` |
+| descrição | 12,5px, 3 linhas | 12,5px, 3 linhas, `margin-top:10px` |
+| rodapé do slide | 74px | 84px |
+
+**Como o v33 vence a cascata.** O seletor de texto é `html:root body #v10slider.slider div.slide--news …`, que soma 1 id (`#v10slider`) + 4 classes/pseudo (`:root`, `.slider`, `.slide--news`, a classe do filho) + 3 tipos. Os três recursos que garantem a vitória, em ordem de peso:
+1. **`html:root body`** → acrescenta a pseudo-classe `:root`, subindo a coluna de classes de 0 para 1;
+2. **`#v10slider.slider`** → 1 id, que vence qualquer seletor sem id;
+3. **`div.slide--news`** (em vez de `.slide--news`) → o `div` é um **elemento**, somando na terceira coluna e desempatando contra o v30, que usa a mesma forma sem o `div`.
+
+Resultado medido com um **resolvedor de cascata** (tinycss2 + expansão de shorthands + ordem do documento): `esp=(1,4,3)` do v33 contra `(1,2,2)` do v30 e `(0,6,6)` do bloco inline de 14px — vence os dois. Em 1280px o v33 **não se aplica** (media `max-width:760px`), portanto o desktop fica intocado.
+
+> **Nota de método.** A primeira versão do meu resolvedor dava resultado **invertido**: calculava a especificidade só do *último* composto do seletor (todos colapsavam em `(0,1,0)`) e, em empate, mantinha a *primeira* regra em vez da última. Foi corrigido (seletor inteiro + última vence) antes de qualquer conclusão ser tirada.
+
+- Cobertura: apenas `site-7830ebdce1.css` — o script tem um **portão** que aborta se o arquivo não contiver `#v10slider`, `slide--news` e `.dots-wrap`.
+- Script: `.tools/v33_mobile_carrossel.py`
+- Bloco: `/* v33-mobile-carrossel:start */ … :end */`
+
 ### Como reaplicar os ajustes
 Os scripts são **idempotentes** (removem o próprio bloco antes de reinserir), então podem ser reexecutados com segurança. Eles ficam na pasta `.tools/` do **repositório de trabalho** (`/home/user/webapp/.tools/`), e não dentro deste pacote publicado:
 
@@ -274,6 +306,7 @@ python3 .tools/v28_programas_2col.py
 python3 .tools/v29_banners_mobile.py
 python3 .tools/v30_news_mobile.py
 python3 .tools/v31_carregamento.py
+python3 .tools/v33_mobile_carrossel.py      # v33 depois do v29/v30: corrige o respiro que eles alteraram
 # v32 — faixa de vídeos do canal (na ordem, pois os dois primeiros geram os arquivos usados)
 python3 .tools/fetch_channel.py      # lê o RSS e baixa as 15 miniaturas
 python3 .tools/build_yt_data.py      # gera assets/js/yt-videos.js

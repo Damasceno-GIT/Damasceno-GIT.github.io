@@ -2557,3 +2557,33 @@ html[data-theme="light"] .navwrap::before,html[data-theme="light"] .navwrap::aft
     justify-content:center!important;margin:13px auto 0!important}
 }
 /* v30-news-mobile:end */
+/* v33-mobile-carrossel:start */@media (max-width:760px){
+/* -- texto das materias: respiro real abaixo do menu fixo --------------- */
+html:root body #v10slider.slider div.slide--news .slide__body{
+ align-items:center!important;justify-content:center!important;text-align:center!important;
+ padding-top:calc(var(--site-menu-top,52px) + 88px)!important;
+ padding-bottom:84px!important;padding-left:44px!important;padding-right:44px!important}
+html:root body #v10slider.slider div.slide--news .slide__col{
+ width:100%!important;max-width:100%!important;margin:0 auto!important;text-align:center!important}
+html:root body #v10slider.slider div.slide--news .slide__title{
+ font-size:17px!important;line-height:1.26!important;font-weight:700!important;
+ text-align:center!important;max-width:none!important;margin:0 auto!important;
+ letter-spacing:-.004em!important;text-wrap:balance!important;
+ text-shadow:0 2px 10px rgba(0,0,0,.86),0 6px 26px rgba(0,0,0,.6)!important}
+html:root body #v10slider.slider div.slide--news .slide__lead{
+ display:-webkit-box!important;-webkit-box-orient:vertical!important;
+ -webkit-line-clamp:3!important;overflow:hidden!important;
+ font-size:12.5px!important;line-height:1.48!important;
+ text-align:center!important;max-width:none!important;margin:10px auto 0!important;
+ text-shadow:0 2px 8px rgba(0,0,0,.88)!important}
+html:root body #v10slider.slider div.slide--news .slide__act{
+ justify-content:center!important;margin:14px auto 0!important}
+/* -- indicadores: centralizados, mais longe da borda inferior ------------ */
+html:root body #v10slider .dots-wrap{
+ justify-content:center!important;padding:0 20px!important;bottom:24px!important}
+html:root body #v10slider .dots{
+ gap:7px!important;padding:6px 12px!important;border-radius:999px!important;
+ background:rgba(6,9,15,.66)!important;box-shadow:0 6px 18px rgba(0,0,0,.45)!important}
+html:root body #v10slider .dots button{width:18px!important;height:4px!important}
+html:root body #v10slider .dots button[aria-selected="true"]{width:30px!important}
+}/* v33-mobile-carrossel:end */
