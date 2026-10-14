@@ -50,6 +50,28 @@ indivisível e apenas a **ordem dos blocos** mudou. Provas de integridade aplica
 - **Defeito pré-existente preservado**: existe um `</main>` **sem `<main>` de abertura** (posição
   original 68280). Não foi criado nem removido — continua como estava.
 
+## Seção de vídeos — responsivo do celular (v35)
+Ajustes pedidos para a faixa de vídeos (a que fica entre a barra "Urgente" e a Programação):
+
+| Item | Antes (celular) | Depois |
+|---|---|---|
+| 3 vídeos fixos | 3 colunas espremidas, título cortado em 2 linhas, sem data | **um embaixo do outro**, largura toda, título até 3 linhas, com data/posição |
+| Rodapé do carrossel | setas e bullets encostados à **esquerda** | **centralizados** (`.vtcar__foot` e `.vtcar__ctrl` com `justify-content:center`) |
+| CTA "Ver tudo" | botão azul abaixo do carrossel | **removido** da seção |
+| Título do card fixo | 11,5 px (compacto para caber em 3 colunas) | **13,5 px** (tamanho do card normal) |
+| Etiqueta do programa | 8,5 px | **9,5 px** |
+
+Em `videos.html` foi **removido o subtítulo** "Os 15 vídeos mais recentes da TV Brasília no YouTube."
+(o `<p class="vtsub">`). O `<h1>Vídeos do canal</h1>` permanece. O mesmo texto continua apenas na
+`<meta name="description">`, que **não é visível** na página.
+
+**Sobre o CTA removido:** `videos.html` continua alcançável — o **menu "Notícias"**? não; o caminho é
+pela **página do vídeo** (`video.html`), que mantém o botão "Ver tudo". O ajuste foi feito na última
+linha do gerador (`secao_index()`), então uma nova execução não traz o botão de volta.
+
+**Verificação:** 24 assertivas de DOM (jsdom) passando, 0 erros nos 9 CSS, 22/22 páginas HTTP 200,
+59 refs de asset no index sem nenhuma quebrada.
+
 ## Arquitetura de dados
 - **Sem backend**: nenhum dado é gravado no servidor. Todo o estado é local.
 - **Estado no navegador**:
