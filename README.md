@@ -7,6 +7,7 @@
 
 ## URLs
 - **Produção (GitHub Pages, user site)**: https://damasceno-git.github.io/
+- **Domínio pretendido**: https://tvbrasilia-git.github.io/ — **ainda não ativo**. Não existe conta `tvbrasilia-git` no GitHub (verificado na API: `404 Not Found`), então esse endereço não tem repositório que o sirva. Para valer, é preciso **criar a conta/org `tvbrasilia-git`** e publicar o conteúdo num repositório `tvbrasilia-git.github.io` (o endereço de um *user site* é derivado do nome da conta — não se escolhe). O conteúdo já está pronto para isso: todos os caminhos são relativos.
 - **Repositório (projeto)**: https://github.com/Damasceno-GIT/TV-Brasilia
 - **Repositório (user site)**: https://github.com/Damasceno-GIT/Damasceno-GIT.github.io
 
@@ -329,17 +330,73 @@ Após reexecutar, valide a integridade dos bundles (chaves balanceadas e 0 erros
 
 > **Atenção:** `v25_migalhas.py` e `v26_vao_migalhas.py` estão **obsoletos**. Os dois foram convertidos em atalhos que delegam para o `v27`, para que reexecutar um script antigo não desfaça a correção atual. Use sempre o `v27_migalhas_responsivo.py`.
 
+### v33 (rodada 2) — Colisão `.vcard__m` (o defeito da captura) + seção de vídeos repensada
+
+Pedido: *"seção de vídeos mostrar três vídeos fixos e abaixo ter 5 vídeos em carrossel que passa até 15 vídeos, bem modernos, com as setas pequenas abaixo dos vídeos junto com os bullets points; ter um CTA com nome VER TUDO que direciona para nova página que será criada (vídeos)"*.
+
+#### O defeito da captura não era espaçamento — era colisão de nomes de classe
+
+A captura mostrava os três cards com o pé da miniatura, o título, **um vazio enorme** e o rodapé de texto no fim do card. A causa foi encontrada medindo o que os **bundles** já definem:
+
+| seletor | o que significa **no bundle do site** | o que eu tinha feito |
+|---|---|---|
+| `.vcard` | card da seção de **Shorts** | meu card de vídeo |
+| `.vcard__b` | corpo do card de Shorts | meu corpo |
+| `.vcard__m` | **a miniatura** (com `aspect-ratio:9/16`) | meu **rodapé** |
+| `.vcard__play` | botão de play do Shorts | meu botão de play |
+
+O bundle carrega **antes** do meu CSS. Então o meu `.vcard__m` (rodapé) herdava `aspect-ratio:9/16`: com ~92px de largura, o rodapé passava a ter ~163px de altura, e o card ia para ~264px **quase todo vazio**. Não era `padding` nem `margin` — era um elemento meu casando com uma regra que não era para ele.
+
+**Correção estrutural:** todas as classes da seção passaram ao namespace **`.vt-*`** (`.vtsec`, `.vtfix`, `.vtcar__track`, `.vtile`, `.vtcta`, …). Verifiquei uma a uma contra os **8 bundles**: nenhuma delas existe em bundle algum, então não há como colidir de novo.
+
+**Portão automático.** `.tools/v33_videos.py` **aborta o build** se (a) alguma classe `.vt-*` que eu emito aparecer em qualquer bundle, ou (b) qualquer nome aposentado (`.vcard`, `.vcard__m`, `.vcar`, `.vsec`, …) voltar ao meu CSS/JS. Assim essa família de bug não volta por descuido.
+
+> **Nota de método — um falso positivo que valeu a pena corrigir.** A primeira versão do portão reprovou o build acusando os próprios **comentários** que documentam a colisão (o cabeçalho do CSS cita `.vcard__m`). Um portão que grita por causa da documentação é um portão que alguém desliga. Corrigi a ferramenta para julgar **código** (remove comentários CSS/JS/HTML antes de procurar os nomes), não para afrouxar a regra.
+
+#### Layout novo
+
+| | antes (v32) | agora |
+|---|---|---|
+| linha de cima | não existia | **3 vídeos fixos** (`.vtfix`) |
+| carrossel | 3 por vez, 15 vídeos, repetindo os 3 de cima | **5 por vez**, 12 vídeos (os 15 **menos** os 3 fixos) |
+| setas | 44px, circulares, **sobrepostas** nas laterais | **30px**, no rodapé, junto aos indicadores |
+| indicadores | no rodapé, com barra | no rodapé, entre as duas setas |
+| CTA | não existia | **VER TUDO** → `videos.html` |
+
+- **Sem repetição:** o carrossel usa `data-vskip="3"` (salta os três de cima). Assim a seção mostra **15 vídeos distintos** (3 + 12). Se preferir que o carrossel percorra os 15 todos, basta remover esse atributo.
+- **Quantos cabem por vez vem do CSS:** o JS lê o `grid-auto-columns` calculado, então os breakpoints ficam num lugar só (5 → 4 → 3 → 2 → 82%). Nada de duplicar limiares em JavaScript.
+- **Ordem correta:** o número mostrado em cada card (“Vídeo *n* de 15”) é a posição **real no acervo**, não a posição na faixa — sem isso o carrossel diria “Vídeo 1 de 15” começando pelo quarto.
+- **Página nova `videos.html`**: grade com **os 15** (mesmo namespace, 5 por linha no desktop), com `h1` e subtítulo.
+
+#### Validação (22 asserções em DOM real, jsdom)
+
+Todas passaram: 3 fixos na capa; 12 no carrossel; **zero IDs repetidos** entre os dois; os 15 aparecem **uma vez cada**; todos os cards apontam para `video.html?v=<id>`; o CTA aponta para `videos.html`; nenhum elemento meu usa classe do bundle; a seção de Shorts continua intacta; a grade de `videos.html` tem os 15 sem repetição; e o player de `video.html` aponta para o ID pedido, usa `youtube-nocookie` e **exclui o vídeo em exibição** da faixa de baixo (14 cards).
+
+> **Como distingui "erro meu" de "limitação da ferramenta".** O jsdom passou a acusar `Could not parse CSS stylesheet`. Em vez de aceitar (ou ignorar) a mensagem, medi: `noticias.html` — que **não** carrega o meu CSS — dá **39 erros iguais**; o `yt-modern.css` carregado **sozinho** dá **zero**; e o `tinycss2` (parser de verdade) também dá **zero** no mesmo arquivo. Conclusão: é limitação do cssom do jsdom, não defeito do meu arquivo. O mesmo teste mostrou que `matchMedia`, `responseStart` e `HTMLMediaElement.load()` vêm do **documento do iframe do YouTube**, não do meu código (o meu uso de `matchMedia` já está em `try/catch`). O filtro do teste exclui esses cinco padrões, cada um com a evidência registrada no próprio arquivo.
+
+#### Um bug real que o teste pegou
+
+A primeira versão do gerador **esqueceu** `data-vskip="3"` no HTML. O resultado era o carrossel repetindo os três vídeos fixos — 15 cards, com os 3 primeiros duplicados. O teste apontou exatamente isso (“carrossel tem 12, achei 15” + “zero ids repetidos” falhando) e não passou adiante até a correção.
+
+**Arquivos:** `assets/css/yt-modern.css` e `assets/js/yt-carousel.js` **reescritos** no namespace `.vt-*`; `videos.html` **novo**; `video.html` **regerado**; bloco da capa trocado (mesmos marcadores `v32-videos-canal`).
+**Script:** `.tools/v33_videos.py` (gera as duas páginas internas a partir da casca nativa de `noticia.html`, troca o bloco da capa, e roda o portão anti-colisão). `video.html` não é mais gerado por `build_video_page.py` — aquele script ficou **obsoleto**.
+
 ## Guia de uso
 1. Abra https://damasceno-git.github.io/
 2. No carrossel da capa, use as setas (ou `←`/`→` com o carrossel focado) para navegar entre os destaques.
-3. Role até **Shorts** e clique em um card: o vídeo abre em um player no meio da tela. `Esc` fecha.
-4. O ícone ao lado do título de cada card abre o vídeo no YouTube em uma nova aba.
-5. O alternador de tema (sol/lua) no topo troca entre claro e escuro; a escolha fica salva no navegador.
+3. Logo abaixo da linha **URGENTE** estão os **vídeos do canal**: três fixos e, abaixo, um carrossel de cinco por vez. As setas pequenas e os indicadores ficam **sob os vídeos**, no mesmo rodapé do CTA **VER TUDO**.
+4. Clique em qualquer vídeo para abrir a **página do vídeo**; embaixo dela aparecem os outros vídeos em carrossel, sem repetir o que está tocando.
+5. **VER TUDO** leva à página `videos.html`, com os 15 vídeos em grade.
+6. Role até **Shorts** e clique em um card: o vídeo abre em um player no meio da tela. `Esc` fecha.
+7. Na página do vídeo, o botão **Abrir no YouTube** leva ao YouTube em nova aba.
+8. O alternador de tema (sol/lua) no topo troca entre claro e escuro; a escolha fica salva no navegador.
 
 ## Entradas funcionais (páginas)
 | Página | Conteúdo |
 |---|---|
-| `index.html` | Capa: carrossel de destaques, notícias, programas, programação, **Shorts**, anuncie, enquete |
+| `index.html` | Capa: carrossel de destaques, notícias, **vídeos do canal (3 fixos + carrossel + VER TUDO)**, programas, programação, **Shorts**, anuncie, enquete |
+| `videos.html` | **Novo**: grade com os 15 vídeos mais recentes do canal |
+| `video.html` | Página do vídeo: player + carrossel dos outros vídeos (aberta por `?v=<id>`) |
 | `noticias.html` / `noticia.html` | Lista e página de matéria |
 | `programas.html` + `programa-*.html` | Índice e 7 páginas de programa (DF Alerta, Jornal Local, Vitrine, Ofertas Vrum, CB. Poder, CB. Agro, CB. Saúde) |
 | `programacao.html` | Grade do dia |
@@ -357,8 +414,9 @@ Após reexecutar, valide a integridade dos bundles (chaves balanceadas e 0 erros
 - **Cache**: `assets/*` com `max-age=86400`; `.html` com `must-revalidate` (via `_headers`, respeitado por hosts que suportam o formato; no GitHub Pages o cache é o padrão do serviço).
 - **Atualizar**: `git add -A && git commit -m "..." && git push origin main && git push usersite main`
 - **Stack**: HTML + CSS + JavaScript (sem framework)
-- **Última atualização**: 2026-10-13
+- **Última atualização**: 2026-10-14
 
 ## Observações / pendências
+- **Domínio `tvbrasilia-git.github.io`**: solicitado, mas **bloqueado** — a conta `tvbrasilia-git` não existe no GitHub (API devolve 404). Passos: criar a conta/org e publicar num repositório chamado `tvbrasilia-git.github.io`. Enquanto isso, o site segue em https://damasceno-git.github.io/.
 - O robô de busca está bloqueado (`robots.txt` com `Disallow: /` e `X-Robots-Tag: noindex`), adequado para homologação; remover ambos para indexação pública.
 - Todas as 20 páginas são HTML gerado manualmente — não há script gerador versionado neste repositório. Alterações de conteúdo devem ser feitas no HTML ou em um gerador que venha a ser incorporado.

@@ -1,267 +1,317 @@
 /* ==========================================================================
-   TV Brasília · Carrossel de vídeos do canal (YouTube)
+   TV Brasília · vídeos do canal (YouTube)  ·  namespace .vt-*
    --------------------------------------------------------------------------
-   Arquivo independente. É usado por duas páginas:
-     - index.html  -> faixa de vídeos logo abaixo da barra de URGENTE
-     - video.html  -> player + carrossel "outros vídeos"
-   Não depende do bundle de cada página: define tudo o que precisa e consome
-   os tokens do site com valor de reserva, então funciona tanto com o bundle
-   da capa quanto com o bundle das páginas internas.
+   POR QUE .vt-* E NÃO .vcard/.vcar (nome antigo, usado até a v32):
+
+   Os bundles das páginas JÁ definem .vcard, .vcard__b, .vcard__m e .vcard__play
+   para a seção de Shorts. A colisão era destrutiva em um caso:
+
+     bundle  ->  .vcard__m{aspect-ratio:9/16}   (o "m" de lá é a MINIATURA)
+     este arq->  .vcard__m{...}                 (o "m" daqui era o RODAPÉ)
+
+   Como o bundle carrega antes, o rodapé herdava aspect-ratio:9/16 e virava uma
+   caixa 9:16. Com ~92px de largura, o rodapé passava a ter ~163px de altura e
+   os cards ficavam com ~264px, quase todo vazio — exatamente o defeito
+   relatado. Nenhum seletor deste arquivo usa os nomes antigos; há um portão
+   automático em .tools/v33_videos.py que ABORTA o build se a colisão voltar.
+
+   Este arquivo é independente do bundle de cada página: define tudo o que
+   precisa e consome os tokens do site com valor de reserva, então funciona
+   tanto no bundle da capa quanto nos das páginas internas.
    ========================================================================== */
 
-/* ---------------------------------------------------------------- faixa -- */
-.vsec{
-  --vgap:16px;
-  --vradius:16px;
-  --vease:cubic-bezier(.2,.8,.2,1);
+/* ------------------------------------------------------------- a seção --- */
+.vtsec{
+  --vtgap:14px;
+  --vtradius:16px;
+  --vtease:cubic-bezier(.2,.8,.2,1);
+  --vtfade:#0A0B0F;
   position:relative;
-  padding:20px 0 6px;
+  padding:22px 0 8px;
 }
-.vsec__wrap{max-width:var(--max,1320px);margin:0 auto;padding:0 20px}
+html[data-theme="light"] .vtsec{--vtfade:#F4F7FB}
+.vtwrap{max-width:var(--max,1320px);margin:0 auto;padding:0 20px}
 
 /* Se o JS estiver desativado a faixa fica vazia: nada de controles soltos
    nem de espaço em branco no meio da página. */
-.vsec:has(.vcar__track:empty){display:none}
+.vtsec:has(.vtfix:empty):has(.vtcar__track:empty){display:none}
 
-/* ----------------------------------------------------------- carrossel -- */
-.vcar{position:relative}
-.vcar__vp{position:relative}
+/* ------------------------------------- os 3 vídeos fixos (linha de cima) -- */
+.vtfix{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:var(--vtgap);
+  margin-bottom:18px;
+}
+
+/* --------------------------------------------------------- o carrossel -- */
+.vtrow{position:relative}
+.vtcar{position:relative}
+.vtcar__vp{position:relative}
 
 /* sombras laterais: aparecem só quando existe conteúdo escondido */
-.vcar__vp::before,
-.vcar__vp::after{
-  content:"";position:absolute;top:0;bottom:0;width:58px;z-index:3;
+.vtcar__vp::before,
+.vtcar__vp::after{
+  content:"";position:absolute;top:0;bottom:0;width:54px;z-index:3;
   pointer-events:none;opacity:0;
-  transition:opacity .3s var(--vease);
+  transition:opacity .3s var(--vtease);
 }
-.vcar__vp::before{left:0;background:linear-gradient(90deg,var(--bg,#0A0B0F),rgba(10,11,15,0))}
-.vcar__vp::after{right:0;background:linear-gradient(270deg,var(--bg,#0A0B0F),rgba(10,11,15,0))}
-.vcar:not(.is-start) .vcar__vp::before{opacity:1}
-.vcar:not(.is-end) .vcar__vp::after{opacity:1}
+.vtcar__vp::before{left:0;background:linear-gradient(90deg,var(--vtfade),rgba(10,11,15,0))}
+.vtcar__vp::after{right:0;background:linear-gradient(270deg,var(--vtfade),rgba(10,11,15,0))}
+.vtcar:not(.is-start) .vtcar__vp::before{opacity:1}
+.vtcar:not(.is-end) .vtcar__vp::after{opacity:1}
 
-.vcar__track{
+/* 5 cartões por vez no desktop; o JS lê este grid-auto-columns para saber
+   quantos cabem por "página" (nada de duplicar breakpoints em JS). */
+.vtcar__track{
   display:grid;
   grid-auto-flow:column;
-  grid-auto-columns:calc((100% - (var(--vgap) * 2)) / 3);
-  gap:var(--vgap);
+  grid-auto-columns:calc((100% - (var(--vtgap) * 4)) / 5);
+  gap:var(--vtgap);
   overflow-x:auto;
   overflow-y:hidden;
-  padding:12px 2px;
-  margin:-12px 0 0;
+  padding:10px 2px;
+  margin:-10px 0 0;
   scroll-snap-type:x mandatory;
   scroll-behavior:smooth;
   scrollbar-width:none;
   -ms-overflow-style:none;
 }
-.vcar__track::-webkit-scrollbar{display:none;width:0;height:0}
-.vcar__track>*{scroll-snap-align:start;scroll-snap-stop:always}
+.vtcar__track::-webkit-scrollbar{display:none;width:0;height:0}
+.vtcar__track>*{scroll-snap-align:start;scroll-snap-stop:always}
 
-/* setas sobrepostas */
-.vcar__nav{
-  position:absolute;top:50%;z-index:5;
-  width:44px;height:44px;border-radius:50%;cursor:pointer;
-  display:grid;place-items:center;padding:0;
-  background:rgba(12,14,20,.72);
-  border:1px solid rgba(255,255,255,.16);
-  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
-  box-shadow:0 12px 30px rgba(0,0,0,.55);
-  opacity:0;
-  transition:opacity .28s var(--vease),background .2s ease,
-             transform .2s var(--vease),border-color .2s ease;
+/* ------------------- rodapé do carrossel: setas pequenas + bullets + CTA -- */
+.vtcar__foot{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  padding:14px 2px 2px;
 }
-.vcar__nav--prev{left:4px;transform:translateY(-50%)}
-.vcar__nav--next{right:4px;transform:translateY(-50%)}
-.vcar:hover .vcar__nav,
-.vcar:focus-within .vcar__nav{opacity:1}
-.vcar__nav:hover{background:rgba(0,184,240,.92);border-color:transparent}
-.vcar__nav--prev:hover{transform:translateY(-50%) scale(1.07)}
-.vcar__nav--next:hover{transform:translateY(-50%) scale(1.07)}
-.vcar__nav:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(0,184,240,.85),0 12px 30px rgba(0,0,0,.55)}
-.vcar__nav[disabled]{opacity:0;pointer-events:none}
-.vcar__nav svg{width:18px;height:18px;fill:#fff}
+.vtcar__ctrl{display:flex;align-items:center;gap:10px;flex:0 0 auto}
 
-/* rodapé: indicadores de página + linha de progresso */
-.vcar__foot{
-  display:flex;align-items:center;justify-content:center;
-  gap:18px;padding:12px 2px 0;
+.vtcar__nav{
+  width:30px;height:30px;padding:0;border-radius:50%;cursor:pointer;
+  display:grid;place-items:center;flex:0 0 auto;
+  background:rgba(255,255,255,.06);
+  border:1px solid var(--line,rgba(255,255,255,.14));
+  transition:background .22s ease,border-color .22s ease,transform .22s var(--vtease);
 }
-.vcar__dots{display:flex;align-items:center;gap:7px}
-.vcar__dot{
+.vtcar__nav svg{width:13px;height:13px;fill:var(--t1,#fff)}
+.vtcar__nav:hover{background:rgba(0,184,240,.92);border-color:transparent;transform:scale(1.08)}
+.vtcar__nav:hover svg{fill:#04121E}
+.vtcar__nav:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(0,184,240,.8)}
+.vtcar__nav[disabled]{opacity:.32;pointer-events:none}
+
+.vtcar__dots{display:flex;align-items:center;gap:7px}
+.vtcar__dot{
   width:7px;height:7px;padding:0;border:0;border-radius:50%;cursor:pointer;
   /* cinza neutro: legível tanto no tema escuro quanto no claro */
   background:rgba(128,142,162,.42);
-  transition:width .28s var(--vease),background .28s var(--vease),border-radius .28s var(--vease);
+  transition:width .28s var(--vtease),background .28s var(--vtease),border-radius .28s var(--vtease);
 }
-.vcar__dot:hover{background:rgba(128,142,162,.72)}
-.vcar__dot.is-on{
-  width:26px;border-radius:4px;
+.vtcar__dot:hover{background:rgba(128,142,162,.72)}
+.vtcar__dot.is-on{
+  width:24px;border-radius:4px;
   background:linear-gradient(90deg,#00B8F0,#7AD8FF);
 }
-.vcar__dot:focus-visible{outline:2px solid rgba(0,184,240,.85);outline-offset:3px}
-.vcar__bar{
-  position:relative;width:min(220px,38vw);height:3px;border-radius:99px;
-  background:rgba(128,142,162,.28);overflow:hidden;
+.vtcar__dot:focus-visible{outline:2px solid rgba(0,184,240,.85);outline-offset:3px}
+
+.vtcar__bar{
+  position:relative;flex:1 1 90px;min-width:70px;max-width:260px;height:3px;
+  border-radius:99px;background:rgba(128,142,162,.26);overflow:hidden;
 }
-.vcar__bar i{
+.vtcar__bar i{
   position:absolute;left:0;top:0;bottom:0;border-radius:99px;
   background:linear-gradient(90deg,#00B8F0,#F8C018);
-  transition:width .3s var(--vease),transform .3s var(--vease);
+  transition:width .3s var(--vtease);
 }
 
-/* -------------------------------------------------------------- cartão -- */
-.vcard{
+/* ------------------------------------------------------------- o CTA ---- */
+.vtcta{
+  display:inline-flex;align-items:center;gap:9px;margin-left:auto;flex:0 0 auto;
+  padding:11px 18px;border-radius:999px;text-decoration:none;white-space:nowrap;
+  font:700 12.5px/1 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+  letter-spacing:.03em;text-transform:uppercase;
+  color:#04121E;border:1px solid transparent;
+  background:linear-gradient(135deg,#00B8F0,#8FDFFF);
+  box-shadow:0 10px 24px -12px rgba(0,184,240,.8);
+  transition:transform .24s var(--vtease),box-shadow .24s var(--vtease),filter .2s ease;
+}
+.vtcta:hover{
+  transform:translateY(-2px);filter:brightness(1.06);
+  box-shadow:0 18px 34px -14px rgba(0,184,240,.95);
+}
+.vtcta:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(0,184,240,.85)}
+.vtcta svg{width:14px;height:14px;fill:currentColor;transition:transform .24s var(--vtease)}
+.vtcta:hover svg{transform:translateX(2px)}
+
+/* ------------------------------------------------------------- o card --- */
+.vtile{
   position:relative;display:flex;flex-direction:column;
-  border-radius:var(--vradius);
+  border-radius:var(--vtradius);
   background:
     linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.018)),
     var(--surface,#12141A);
   border:1px solid var(--line,rgba(255,255,255,.10));
   overflow:hidden;
   text-decoration:none;color:inherit;
-  transition:transform .32s var(--vease),border-color .32s var(--vease),
-             box-shadow .32s var(--vease);
+  transition:transform .32s var(--vtease),border-color .32s var(--vtease),
+             box-shadow .32s var(--vtease);
 }
 /* borda em gradiente revelada no hover */
-.vcard::after{
+.vtile::after{
   content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
   padding:1px;
   background:linear-gradient(135deg,rgba(0,184,240,.9),rgba(248,192,24,.75),rgba(0,184,240,0));
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
   -webkit-mask-composite:xor;mask-composite:exclude;
-  opacity:0;transition:opacity .32s var(--vease);
+  opacity:0;transition:opacity .32s var(--vtease);
 }
-.vcard:hover,
-.vcard:focus-visible{
+.vtile:hover,.vtile:focus-visible{
   transform:translateY(-6px);
   border-color:transparent;
   box-shadow:0 24px 50px -20px rgba(0,0,0,.9),0 0 0 1px rgba(0,184,240,.28);
 }
-.vcard:hover::after,
-.vcard:focus-visible::after{opacity:1}
-.vcard:focus-visible{outline:none}
+.vtile:hover::after,.vtile:focus-visible::after{opacity:1}
+.vtile:focus-visible{outline:none}
 
-.vcard__thumb{
-  position:relative;display:block;aspect-ratio:16/9;
-  overflow:hidden;background:#0E1016;
+/* a miniatura é SEMPRE 16:9 e é ela que define a altura do card */
+.vtile__thumb{
+  position:relative;display:block;aspect-ratio:16/9;overflow:hidden;background:#0E1016;
 }
-.vcard__thumb img{
+.vtile__thumb img{
   width:100%;height:100%;object-fit:cover;display:block;
-  transition:transform .6s var(--vease);
+  transition:transform .6s var(--vtease);
 }
-.vcard:hover .vcard__thumb img{transform:scale(1.06)}
-.vcard__thumb::before{
+.vtile:hover .vtile__thumb img{transform:scale(1.06)}
+.vtile__thumb::before{
   content:"";position:absolute;inset:0;z-index:1;
-  background:linear-gradient(180deg,rgba(10,11,15,0) 38%,rgba(10,11,15,.78));
+  background:linear-gradient(180deg,rgba(10,11,15,0) 40%,rgba(10,11,15,.76));
 }
-.vcard__tag{
-  position:absolute;left:10px;top:10px;z-index:2;
+.vtile__tag{
+  position:absolute;left:9px;top:9px;z-index:2;
   font:700 9.5px/1 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
   letter-spacing:.09em;text-transform:uppercase;
   color:#04121E;padding:5px 8px;border-radius:6px;
   background:linear-gradient(135deg,#00B8F0,#8FDFFF);
   box-shadow:0 6px 16px rgba(0,0,0,.45);
 }
-.vcard__play{
+.vtile__play{
   position:absolute;inset:0;z-index:2;display:grid;place-items:center;
-  opacity:0;transition:opacity .3s var(--vease);
+  opacity:0;transition:opacity .3s var(--vtease);
 }
-.vcard:hover .vcard__play,
-.vcard:focus-visible .vcard__play{opacity:1}
-.vcard__play i{
-  width:54px;height:54px;border-radius:50%;display:grid;place-items:center;
+.vtile:hover .vtile__play,
+.vtile:focus-visible .vtile__play{opacity:1}
+.vtile__play i{
+  width:clamp(38px,26%,52px);aspect-ratio:1;border-radius:50%;
+  display:grid;place-items:center;
   background:rgba(10,11,15,.55);
   -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
   border:1px solid rgba(255,255,255,.38);
   box-shadow:0 12px 32px rgba(0,0,0,.6);
 }
-.vcard__play svg{width:20px;height:20px;fill:#fff;margin-left:3px}
+.vtile__play svg{width:44%;height:44%;fill:#fff;margin-left:6%}
 
-.vcard__b{
-  display:flex;flex-direction:column;gap:7px;flex:1;
-  padding:12px 13px 14px;
+.vtile__b{
+  display:flex;flex-direction:column;gap:6px;flex:1;
+  padding:11px 12px 13px;
 }
-.vcard__t{
+.vtile__t{
   margin:0;color:var(--t1,#fff);
   font:700 13.5px/1.34 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
   overflow:hidden;
 }
-.vcard__m{
+.vtile__m{
   margin-top:auto;display:flex;align-items:center;gap:7px;
   color:var(--t3,#6E7A8C);
   font:500 11.5px/1 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
 }
-.vcard__m svg{width:13px;height:13px;fill:var(--live,#CC1F2C);flex:0 0 auto}
-.vcard__m span{white-space:nowrap}
+.vtile__m svg{width:12px;height:12px;fill:var(--live,#CC1F2C);flex:0 0 auto}
+.vtile__m span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* ---------------------------------------------------- página do vídeo -- */
-.vpage{padding:26px 0 4px}
-.vwrap{max-width:var(--max,1320px);margin:0 auto;padding:0 20px}
-
-.vplayer{
+/* ------------------------------------------------- página do vídeo ------ */
+.vtpage{padding:26px 0 4px}
+.vtplayer{
   position:relative;border-radius:18px;overflow:hidden;background:#000;
   border:1px solid var(--line,rgba(255,255,255,.10));
   box-shadow:0 34px 80px -34px rgba(0,0,0,.95);
 }
-.vplayer::before{content:"";display:block;padding-top:56.25%}
-.vplayer iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
-.vplayer__ph{
+.vtplayer::before{content:"";display:block;padding-top:56.25%}
+.vtplayer iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.vtplayer__ph{
   position:absolute;inset:0;display:grid;place-items:center;color:var(--t3,#6E7A8C);
   font:500 13px/1 Inter,system-ui,sans-serif;
 }
-
-.vhead{margin:20px 0 0;max-width:960px}
-.vhead__t{
-  margin:0;color:var(--t1,#fff);
-  font:800 clamp(19px,2.35vw,27px)/1.24 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
-  letter-spacing:-.01em;
-}
-.vhead__m{
-  display:flex;flex-wrap:wrap;align-items:center;gap:10px;
-  margin-top:12px;color:var(--t2,#A7B2C2);
-  font:500 12.5px/1 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
-}
-.vchip{
+.vtmeta{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-top:12px;
+  color:var(--t2,#A7B2C2);font:500 12.5px/1 Inter,system-ui,sans-serif}
+.vtchip{
   display:inline-flex;align-items:center;gap:7px;
   padding:7px 12px;border-radius:99px;text-decoration:none;
   background:rgba(255,255,255,.06);
   border:1px solid var(--line,rgba(255,255,255,.10));
   color:var(--t1,#fff);
   font:600 12px/1 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
-  transition:background .2s ease,border-color .2s ease,transform .2s var(--vease);
+  transition:background .2s ease,border-color .2s ease,transform .2s var(--vtease);
 }
-.vchip svg{width:14px;height:14px;fill:currentColor}
-.vchip--yt:hover{background:rgba(204,31,44,.24);border-color:rgba(204,31,44,.55);transform:translateY(-1px)}
-.vchip--plain{cursor:default}
-.vchip--plain:hover{transform:none}
+.vtchip svg{width:14px;height:14px;fill:currentColor}
+.vtchip--yt:hover{background:rgba(204,31,44,.24);border-color:rgba(204,31,44,.55);transform:translateY(-1px)}
+.vtchip--plain{cursor:default}
+.vtchip--plain:hover{transform:none}
+.vtrail{margin-top:34px;padding-bottom:8px}
 
-.vrailSec{margin-top:34px;padding-bottom:8px}
+/* ------------------------------------- página "vídeos": grade completa -- */
+.vthead{margin:0 0 22px;max-width:70ch}
+.vtsh{
+  margin:0;color:var(--t1,#fff);
+  font:800 clamp(22px,3vw,34px)/1.16 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+  letter-spacing:-.015em;
+}
+.vtsub{margin:10px 0 0;color:var(--t2,#A7B2C2);
+  font:500 13.5px/1.5 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+.vtgrid{
+  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:var(--vtgap);align-items:start;
+}
 
-/* ------------------------------------------------------- responsivo ---- */
-@media (max-width:1100px){
-  .vcar__track{grid-auto-columns:calc((100% - var(--vgap)) / 2)}
+/* ----------------------------------------------------------- responsivo -- */
+@media (max-width:1180px){
+  .vtcar__track{grid-auto-columns:calc((100% - (var(--vtgap) * 3)) / 4)}
+  .vtgrid{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media (max-width:980px){
+  .vtcar__track{grid-auto-columns:calc((100% - (var(--vtgap) * 2)) / 3)}
+  .vtgrid{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 @media (max-width:760px){
-  .vsec{padding:16px 0 2px}
-  .vsec__wrap{padding:0 14px}
-  .vwrap{padding:0 14px}
-  .vcar__nav{opacity:1;width:38px;height:38px}
-  .vcar__nav--prev{left:0}
-  .vcar__nav--next{right:0}
-  .vcar__bar{display:none}
-  .vcar__foot{padding-top:10px}
-  .vcard__t{font-size:13px}
-  .vpage{padding:18px 0 4px}
-  .vplayer{border-radius:14px}
+  .vtsec{padding:16px 0 4px}
+  .vtwrap{padding:0 14px}
+  .vtcar__nav{width:28px;height:28px}
+  .vtcar__nav svg{width:12px;height:12px}
+  .vtcar__foot{gap:10px;padding-top:12px}
+  .vtcta{margin-left:0;width:100%;justify-content:center;padding:12px 18px}
+  .vtgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .vtpage{padding:18px 0 4px}
+  .vtplayer{border-radius:14px}
 }
-@media (max-width:640px){
-  .vcar__track{grid-auto-columns:82%}
+/* no celular os 3 fixos continuam em linha, só que compactos */
+@media (max-width:620px){
+  .vtcar__track{grid-auto-columns:calc((100% - var(--vtgap)) / 2)}
+}
+@media (max-width:760px){
+  .vtfix .vtile__m{display:none}
+  .vtfix .vtile__t{font-size:11.5px;line-height:1.3}
+  .vtfix .vtile__b{padding:8px 9px 10px}
+  .vtfix .vtile__tag{font-size:8.5px;padding:4px 6px;left:6px;top:6px}
+}
+@media (max-width:460px){
+  .vtcar__track{grid-auto-columns:82%}
+  .vtgrid{grid-template-columns:1fr}
 }
 
 /* quem prefere menos movimento não recebe rolagem animada */
 @media (prefers-reduced-motion: reduce){
-  .vcar__track{scroll-behavior:auto}
-  .vcard,.vcard__thumb img,.vcar__nav,.vcar__dot{transition:none}
-  .vcard:hover{transform:none}
-  .vcard:hover .vcard__thumb img{transform:none}
+  .vtcar__track{scroll-behavior:auto}
+  .vtile,.vtile__thumb img,.vtcar__nav,.vtcar__dot,.vtcta{transition:none}
+  .vtile:hover{transform:none}
+  .vtile:hover .vtile__thumb img{transform:none}
+  .vtcta:hover{transform:none}
 }
