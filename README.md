@@ -235,6 +235,32 @@ O JPEG é **~2,3× menor e com mais qualidade** — vence nos dois critérios. O
 - Script: `.tools/v31_carregamento.py` (idempotente)
 - Não altera CSS; no HTML só escreve `src`/`loading`/`decoding`.
 
+### v32 — Faixa de vídeos do canal + página do vídeo (novo)
+Pedido: **uma seção nova abaixo da linha de URGENTE, sem títulos, em carrossel mostrando de três em três os últimos 15 vídeos do canal**; ao clicar, **abre uma página do vídeo** e, abaixo dela, **os outros vídeos em um carrossel** — "tudo bem moderno".
+
+**Origem dos dados.** Os 15 vídeos vêm do **feed RSS oficial do canal** (`youtube.com/feeds/videos.xml?channel_id=UCl5Yg7lgK_qqW6sDtJYzCVA`), não de uma lista escrita à mão. Isso importa: os 15 vídeos atuais do canal são **diferentes** dos 15 da playlist antiga de Shorts — nenhum dos IDs coincide. O RSS entrega exatamente os 15 mais recentes.
+
+| | Shorts (seção antiga) | Faixa de vídeos (v32) |
+|---|---|---|
+| origem | playlist fixa | feed RSS do canal |
+| formato | vertical 9:16 (540×960) | horizontal 16:9 (560×315) |
+| player | modal na própria página | **página própria** (`video.html`) |
+
+**Decisões técnicas.**
+- Os dados são **estáticos** (`assets/js/yt-videos.js`), gerados por script: nenhuma chamada à API do YouTube no navegador, nenhum custo de cota, nenhum erro se o visitante bloquear terceiros. As miniaturas também são **locais** (`assets/img/ytv-<id>.jpg`, 560×315, ~36 KB cada, 535 KB no total) — mesmo critério já usado nos Shorts, sem hotlink em tempo de execução.
+- **Nada de título**: a faixa é `<section id="videos">` com uma `aria-label` (acessibilidade) e **nenhum `h1`–`h4` nem parágrafo** — verificado por teste automatizado.
+- **3 por vez**: grade com `grid-auto-flow:column` e `grid-auto-columns:calc((100% − 2·gap)/3)`, com rolagem por encaixe (`scroll-snap`). Acompanha o viewport: **3** no desktop, **2** até 1100px, **1** no celular.
+- **Sem dependência do bundle da página**: `assets/css/yt-modern.css` e `assets/js/yt-carousel.js` são autossuficientes e usam os tokens do site com valor de reserva. Assim a mesma faixa funciona na capa (bundle `7830ebdce1`) e na página do vídeo (bundle `48a3082af5`), e **não houve alteração em nenhum bundle**.
+- `video.html` foi **gerada a partir do chrome nativo** de `noticia.html` (barra social, menu, drawer, rodapé), para nascer dentro do design system sem duplicar código à mão.
+- A faixa da página do vídeo **exclui o vídeo em exibição** (14 cards), e `?v=<id>` inválido ou ausente cai no primeiro vídeo do feed.
+
+**Estilo ("bem moderno").** Cards com borda em gradiente revelada no hover, elevação suave, zoom da miniatura, selo do programa (Jornal Local / DF Alerta), setas circulares sobrepostas com desfoque de fundo, indicadores que viram pílula na página ativa, linha de progresso e sombras laterais que só aparecem quando há conteúdo escondido. Respeita `prefers-reduced-motion` e o **tema claro** (indicadores e progresso usam cinza neutro, não branco translúcido).
+
+**Arquivos novos:** `assets/css/yt-modern.css`, `assets/js/yt-carousel.js`, `assets/js/yt-videos.js`, `video.html`, 15 × `assets/img/ytv-*.jpg`.
+**Scripts:** `.tools/fetch_channel.py` (lê o RSS e baixa as miniaturas), `.tools/build_yt_data.py` (gera o JS de dados), `.tools/build_video_page.py` (gera `video.html`), `.tools/v32_videos_canal.py` (insere a faixa na capa; idempotente).
+
+**Validação:** 31 asserções automatizadas em DOM real (jsdom) — 15 cards, ordem idêntica ao feed, miniaturas existentes em disco, 5 indicadores, seta anterior desabilitada no início, `iframe` com o ID certo em `youtube-nocookie`, exclusão do vídeo atual, e os dois casos de fallback. Todas passaram.
+
 ### Como reaplicar os ajustes
 Os scripts são **idempotentes** (removem o próprio bloco antes de reinserir), então podem ser reexecutados com segurança. Eles ficam na pasta `.tools/` do **repositório de trabalho** (`/home/user/webapp/.tools/`), e não dentro deste pacote publicado:
 
@@ -248,7 +274,14 @@ python3 .tools/v28_programas_2col.py
 python3 .tools/v29_banners_mobile.py
 python3 .tools/v30_news_mobile.py
 python3 .tools/v31_carregamento.py
+# v32 — faixa de vídeos do canal (na ordem, pois os dois primeiros geram os arquivos usados)
+python3 .tools/fetch_channel.py      # lê o RSS e baixa as 15 miniaturas
+python3 .tools/build_yt_data.py      # gera assets/js/yt-videos.js
+python3 .tools/build_video_page.py   # gera video.html
+python3 .tools/v32_videos_canal.py   # insere a faixa na capa
 ```
+
+> Para **atualizar** a faixa com vídeos novos, basta rodar de novo `fetch_channel.py` → `build_yt_data.py` → `build_video_page.py`. O `v32_videos_canal.py` só mexe na capa e não precisa ser reexecutado (a faixa se alimenta do JS de dados).
 Após reexecutar, valide a integridade dos bundles (chaves balanceadas e 0 erros de parse — via `tinycss2`).
 
 > **Atenção:** `v25_migalhas.py` e `v26_vao_migalhas.py` estão **obsoletos**. Os dois foram convertidos em atalhos que delegam para o `v27`, para que reexecutar um script antigo não desfaça a correção atual. Use sempre o `v27_migalhas_responsivo.py`.
